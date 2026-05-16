@@ -1,0 +1,1 @@
+App para que tu empresa pueda ganar más al ofrecer un mejor servicio. Varios módulos te dejarán evaluar tu servicio y ofrecer mejoras para así ganar más y con tus compañeros y tus clientes más felices.
