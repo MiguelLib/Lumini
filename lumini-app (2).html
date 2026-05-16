@@ -1,0 +1,1939 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumini — Más Sonrisas, Más Beneficios</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Josefin+Sans:wght@200;300;400;600&display=swap" rel="stylesheet">
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, push, get, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBusp0peBI1sTfC1Fae5J7ZO2XcLzsMHBI",
+    authDomain: "lumini-e410a.firebaseapp.com",
+    databaseURL: "https://lumini-e410a-default-rtdb.firebaseio.com",
+    projectId: "lumini-e410a",
+    storageBucket: "lumini-e410a.firebasestorage.app",
+    messagingSenderId: "687921055936",
+    appId: "1:687921055936:web:5cc2ab35f5960585ee4525",
+    measurementId: "G-R0PBJ706EH"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const auth = getAuth(app);
+
+  // Expose to global scope for non-module functions
+  window._fb = { db, auth, ref, set, push, get, onValue, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged };
+
+  // Auth state observer
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      // Load user data from Firebase
+      get(ref(db, 'users/' + user.uid)).then(snapshot => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          state.user = { email: user.email, company: data.company, sector: data.sector, plan: data.plan || 'free', uid: user.uid };
+          loadDashboard();
+          showScreen('screen-dashboard');
+        }
+      });
+    }
+  });
+</script>
+<style>
+:root {
+  --navy: #0d1b2e;
+  --navy-mid: #162540;
+  --navy-light: #1e3255;
+  --gold: #c9a84c;
+  --gold-light: #e8c96a;
+  --gold-pale: #f0dfa0;
+  --silver: #a8b8c8;
+  --silver-light: #ccd8e4;
+  --white: #f5f0e8;
+  --text-dim: #8899aa;
+  --danger: #c0392b;
+  --success: #27ae60;
+  --warning: #e67e22;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Josefin Sans', sans-serif;
+  background: var(--navy);
+  color: var(--white);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ───── BACKGROUND ───── */
+.bg-stars {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(201,168,76,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(168,184,200,0.04) 0%, transparent 50%),
+    var(--navy);
+}
+.bg-stars::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 15% 25%, rgba(201,168,76,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 35% 60%, rgba(255,255,255,0.15) 0%, transparent 100%),
+    radial-gradient(1px 1px at 65% 15%, rgba(201,168,76,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 45%, rgba(255,255,255,0.1) 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 80%, rgba(201,168,76,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 70%, rgba(255,255,255,0.12) 0%, transparent 100%),
+    radial-gradient(1px 1px at 10% 85%, rgba(201,168,76,0.25) 0%, transparent 100%),
+    radial-gradient(1px 1px at 45% 35%, rgba(255,255,255,0.08) 0%, transparent 100%);
+}
+
+/* ───── SCREENS ───── */
+.screen { position: relative; z-index: 1; display: none; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ───── LANDING ───── */
+#screen-landing {
+  align-items: center; justify-content: center; text-align: center;
+  padding: 40px 20px;
+}
+
+.landing-logo-wrap {
+  width: 160px; height: 160px; margin: 0 auto 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #2a4a7a, var(--navy-mid));
+  border: 3px solid var(--gold);
+  box-shadow: 0 0 40px rgba(201,168,76,0.3), 0 0 80px rgba(201,168,76,0.1);
+  display: flex; align-items: center; justify-content: center;
+  animation: pulse-glow 3s ease-in-out infinite;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: var(--gold);
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-logo-wrap::after {
+  content: '';
+  position: absolute;
+  width: 40px; height: 60px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(201,168,76,0.6), transparent);
+  clip-path: polygon(50% 0%, 40% 30%, 20% 30%, 35% 50%, 25% 80%, 50% 60%, 75% 80%, 65% 50%, 80% 30%, 60% 30%);
+  top: 30px;
+  animation: flame 2s ease-in-out infinite;
+}
+
+@keyframes flame {
+  0%, 100% { transform: scaleY(1) scaleX(1); opacity: 0.9; }
+  50% { transform: scaleY(1.1) scaleX(0.95); opacity: 1; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 40px rgba(201,168,76,0.3), 0 0 80px rgba(201,168,76,0.1); }
+  50% { box-shadow: 0 0 60px rgba(201,168,76,0.5), 0 0 100px rgba(201,168,76,0.2); }
+}
+
+.landing-brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(48px, 10vw, 80px);
+  font-weight: 300;
+  letter-spacing: 12px;
+  color: var(--gold);
+  text-shadow: 0 0 30px rgba(201,168,76,0.4);
+  margin-bottom: 8px;
+}
+
+.landing-tagline {
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: var(--silver);
+  text-transform: uppercase;
+  margin-bottom: 48px;
+}
+
+.landing-subtitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(18px, 4vw, 26px);
+  font-weight: 300;
+  font-style: italic;
+  color: var(--silver-light);
+  max-width: 560px;
+  margin: 0 auto 64px;
+  line-height: 1.6;
+}
+
+.landing-cards {
+  display: flex; gap: 20px; flex-wrap: wrap;
+  justify-content: center; margin-bottom: 48px;
+  max-width: 700px;
+}
+
+.landing-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 4px;
+  padding: 32px 28px;
+  width: 200px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  transform: scaleX(0); transition: transform 0.3s ease;
+}
+
+.landing-card:hover { 
+  border-color: var(--gold);
+  transform: translateY(-4px);
+  background: linear-gradient(135deg, rgba(201,168,76,0.08), rgba(255,255,255,0.02));
+}
+.landing-card:hover::before { transform: scaleX(1); }
+
+.card-icon { font-size: 32px; margin-bottom: 12px; }
+.card-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px; font-weight: 600;
+  color: var(--gold); margin-bottom: 6px;
+}
+.card-desc { font-size: 11px; color: var(--text-dim); letter-spacing: 1px; line-height: 1.5; }
+
+.lang-toggle {
+  display: flex; gap: 8px; justify-content: center; margin-bottom: 32px;
+}
+.lang-btn {
+  background: none; border: 1px solid rgba(201,168,76,0.3);
+  color: var(--silver); padding: 6px 16px; font-size: 11px;
+  letter-spacing: 2px; cursor: pointer; transition: all 0.2s;
+  font-family: 'Josefin Sans', sans-serif;
+}
+.lang-btn.active, .lang-btn:hover {
+  border-color: var(--gold); color: var(--gold);
+  background: rgba(201,168,76,0.08);
+}
+
+/* ───── AUTH ───── */
+#screen-auth {
+  align-items: center; justify-content: center; padding: 40px 20px;
+}
+
+.auth-box {
+  background: linear-gradient(160deg, rgba(22,37,64,0.95), rgba(13,27,46,0.98));
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 4px;
+  padding: 48px 40px;
+  width: 100%; max-width: 420px;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+}
+
+.auth-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px; font-weight: 300;
+  letter-spacing: 8px; color: var(--gold);
+  text-align: center; margin-bottom: 4px;
+}
+.auth-sub { font-size: 10px; letter-spacing: 3px; color: var(--text-dim); text-align: center; margin-bottom: 40px; }
+
+.auth-tabs { display: flex; margin-bottom: 32px; border-bottom: 1px solid rgba(201,168,76,0.15); }
+.auth-tab {
+  flex: 1; text-align: center; padding: 12px;
+  font-size: 11px; letter-spacing: 2px;
+  color: var(--text-dim); cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s; background: none; border-top: none; border-left: none; border-right: none;
+  font-family: 'Josefin Sans', sans-serif;
+}
+.auth-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+.form-group { margin-bottom: 20px; }
+.form-label { font-size: 10px; letter-spacing: 2px; color: var(--silver); margin-bottom: 8px; display: block; }
+.form-input {
+  width: 100%; padding: 12px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(168,184,200,0.2);
+  color: var(--white); font-family: 'Josefin Sans', sans-serif;
+  font-size: 14px; outline: none; transition: all 0.2s;
+}
+.form-input:focus { border-color: var(--gold); background: rgba(201,168,76,0.05); }
+.form-input::placeholder { color: var(--text-dim); font-size: 12px; }
+
+.form-select {
+  width: 100%; padding: 12px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(168,184,200,0.2);
+  color: var(--white); font-family: 'Josefin Sans', sans-serif;
+  font-size: 13px; outline: none; transition: all 0.2s; cursor: pointer;
+  -webkit-appearance: none;
+}
+.form-select option { background: var(--navy-mid); }
+.form-select:focus { border-color: var(--gold); }
+
+.btn-primary {
+  width: 100%; padding: 14px;
+  background: linear-gradient(135deg, var(--gold), #a8782a);
+  border: none; color: var(--navy);
+  font-family: 'Josefin Sans', sans-serif;
+  font-size: 11px; letter-spacing: 3px;
+  font-weight: 600; cursor: pointer;
+  transition: all 0.2s; text-transform: uppercase;
+}
+.btn-primary:hover { background: linear-gradient(135deg, var(--gold-light), var(--gold)); transform: translateY(-1px); }
+
+.btn-secondary {
+  padding: 10px 24px;
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-family: 'Josefin Sans', sans-serif;
+  font-size: 11px; letter-spacing: 2px;
+  cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+}
+.btn-secondary:hover { background: rgba(201,168,76,0.1); }
+
+.btn-ghost {
+  padding: 10px 20px; background: transparent;
+  border: 1px solid rgba(168,184,200,0.2);
+  color: var(--silver); font-family: 'Josefin Sans', sans-serif;
+  font-size: 11px; letter-spacing: 2px; cursor: pointer;
+  transition: all 0.2s; text-transform: uppercase;
+}
+.btn-ghost:hover { border-color: var(--silver); }
+
+.auth-divider { text-align: center; color: var(--text-dim); font-size: 11px; margin: 20px 0; }
+
+/* ───── DASHBOARD ───── */
+#screen-dashboard { padding: 0; }
+
+.top-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 32px;
+  background: rgba(13,27,46,0.9);
+  border-bottom: 1px solid rgba(201,168,76,0.15);
+  backdrop-filter: blur(10px);
+  position: sticky; top: 0; z-index: 100;
+}
+
+.top-bar-brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; letter-spacing: 6px; color: var(--gold); font-weight: 300;
+}
+
+.top-bar-user { display: flex; align-items: center; gap: 16px; }
+.user-name { font-size: 12px; color: var(--silver); letter-spacing: 1px; }
+.user-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), #8a6020);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 600; color: var(--navy);
+}
+
+.dashboard-content { padding: 32px; max-width: 1200px; margin: 0 auto; width: 100%; }
+
+.dash-greeting {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 300; color: var(--white); margin-bottom: 4px;
+}
+.dash-date { font-size: 11px; color: var(--text-dim); letter-spacing: 2px; margin-bottom: 40px; }
+
+/* KPI CARDS */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 40px; }
+
+.kpi-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  border: 1px solid rgba(201,168,76,0.15);
+  padding: 24px 20px; position: relative; overflow: hidden;
+}
+.kpi-card::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.4;
+}
+.kpi-label { font-size: 10px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 12px; }
+.kpi-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 42px; font-weight: 300;
+  line-height: 1;
+}
+.kpi-value.gold { color: var(--gold); }
+.kpi-value.silver { color: var(--silver-light); }
+.kpi-value.good { color: #6ec87a; }
+.kpi-value.warn { color: #e8b84b; }
+.kpi-delta { font-size: 11px; margin-top: 6px; }
+.kpi-delta.up { color: var(--success); }
+.kpi-delta.down { color: var(--danger); }
+
+/* NAV TABS */
+.dash-nav { display: flex; gap: 4px; margin-bottom: 32px; flex-wrap: wrap; }
+.dash-tab {
+  padding: 10px 20px; background: none;
+  border: 1px solid rgba(168,184,200,0.15);
+  color: var(--text-dim); font-family: 'Josefin Sans', sans-serif;
+  font-size: 11px; letter-spacing: 2px; cursor: pointer;
+  transition: all 0.2s; text-transform: uppercase;
+}
+.dash-tab.active {
+  background: rgba(201,168,76,0.1);
+  border-color: var(--gold); color: var(--gold);
+}
+.dash-tab:hover:not(.active) { border-color: var(--silver); color: var(--silver); }
+
+/* SECTION PANELS */
+.dash-panel { display: none; }
+.dash-panel.active { display: block; }
+
+/* ───── HISTORY CHART ───── */
+.chart-wrap {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(201,168,76,0.1);
+  padding: 28px; margin-bottom: 24px;
+}
+.chart-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; font-weight: 300;
+  color: var(--gold-pale); margin-bottom: 20px;
+}
+.chart-bars { display: flex; align-items: flex-end; gap: 12px; height: 160px; }
+.chart-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+.chart-bar {
+  width: 100%; border-radius: 1px 1px 0 0;
+  position: relative; min-height: 4px;
+  transition: opacity 0.2s;
+}
+.chart-bar:hover { opacity: 0.8; }
+.chart-bar.gold-bar { background: linear-gradient(to top, #8a6020, var(--gold)); }
+.chart-bar.silver-bar { background: linear-gradient(to top, #667788, var(--silver-light)); }
+.chart-bar.teal-bar { background: linear-gradient(to top, #1a6060, #4ecdc4); }
+.chart-label { font-size: 10px; color: var(--text-dim); letter-spacing: 1px; margin-top: 6px; }
+.chart-legend { display: flex; gap: 20px; margin-top: 16px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-dim); }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* ───── DIAGNOSTIC ───── */
+.diag-section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+}
+.diag-section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px; font-weight: 300; color: var(--white);
+}
+.diag-modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 32px; }
+
+.module-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  border: 1px solid rgba(201,168,76,0.2);
+  padding: 28px 24px; cursor: pointer;
+  transition: all 0.3s; position: relative; overflow: hidden;
+}
+.module-card:hover {
+  border-color: var(--gold);
+  background: linear-gradient(135deg, rgba(201,168,76,0.07), rgba(255,255,255,0.02));
+  transform: translateY(-2px);
+}
+.module-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 48px; font-weight: 300; color: rgba(201,168,76,0.2);
+  position: absolute; top: 12px; right: 16px;
+}
+.module-icon { font-size: 24px; margin-bottom: 12px; }
+.module-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px; font-weight: 600;
+  color: var(--gold-pale); margin-bottom: 6px;
+}
+.module-desc { font-size: 11px; color: var(--text-dim); letter-spacing: 1px; line-height: 1.6; margin-bottom: 16px; }
+.module-meta { display: flex; gap: 12px; align-items: center; }
+.module-q-count { font-size: 10px; color: var(--silver); letter-spacing: 1px; }
+.module-status {
+  font-size: 10px; letter-spacing: 1px; padding: 3px 10px;
+}
+.status-pending { color: var(--text-dim); border: 1px solid rgba(168,184,200,0.2); }
+.status-done { color: var(--success); border: 1px solid rgba(39,174,96,0.3); }
+.status-partial { color: var(--warning); border: 1px solid rgba(230,126,34,0.3); }
+
+/* ───── QUIZ ───── */
+#screen-quiz { align-items: center; justify-content: flex-start; padding: 0; }
+
+.quiz-header {
+  width: 100%; padding: 16px 32px;
+  background: rgba(13,27,46,0.9);
+  border-bottom: 1px solid rgba(201,168,76,0.15);
+  display: flex; align-items: center; justify-content: space-between;
+  backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100;
+}
+
+.quiz-progress-wrap { flex: 1; max-width: 400px; margin: 0 24px; }
+.quiz-progress-label { font-size: 10px; color: var(--text-dim); letter-spacing: 2px; margin-bottom: 6px; display: flex; justify-content: space-between; }
+.quiz-progress-bar { height: 2px; background: rgba(255,255,255,0.1); border-radius: 1px; overflow: hidden; }
+.quiz-progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); transition: width 0.4s ease; }
+
+.quiz-body { width: 100%; max-width: 720px; margin: 0 auto; padding: 48px 32px; }
+
+.quiz-module-label {
+  font-size: 10px; letter-spacing: 3px; color: var(--gold);
+  text-transform: uppercase; margin-bottom: 12px;
+}
+.quiz-q-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13px; font-style: italic; color: var(--text-dim);
+  margin-bottom: 24px;
+}
+.quiz-question {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(22px, 4vw, 32px);
+  font-weight: 300; color: var(--white);
+  line-height: 1.4; margin-bottom: 40px;
+}
+
+.quiz-options { display: flex; flex-direction: column; gap: 12px; }
+
+.quiz-option {
+  padding: 16px 20px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(168,184,200,0.15);
+  color: var(--silver-light); cursor: pointer;
+  font-family: 'Josefin Sans', sans-serif;
+  font-size: 13px; letter-spacing: 0.5px;
+  transition: all 0.2s; text-align: left;
+  display: flex; align-items: center; gap: 12px;
+}
+.quiz-option:hover {
+  border-color: var(--gold);
+  background: rgba(201,168,76,0.06);
+  color: var(--white);
+}
+.quiz-option.selected {
+  border-color: var(--gold);
+  background: rgba(201,168,76,0.12);
+  color: var(--gold-pale);
+}
+.option-letter {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 1px solid currentColor;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; flex-shrink: 0;
+}
+
+.quiz-scale { display: flex; gap: 8px; flex-wrap: wrap; }
+.scale-btn {
+  flex: 1; min-width: 48px; max-width: 72px;
+  padding: 14px 8px; text-align: center;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(168,184,200,0.15);
+  color: var(--silver); cursor: pointer;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px; transition: all 0.2s;
+}
+.scale-btn:hover, .scale-btn.selected {
+  border-color: var(--gold); background: rgba(201,168,76,0.12); color: var(--gold);
+}
+.scale-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-dim); margin-top: 8px; letter-spacing: 1px; }
+
+.quiz-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 48px; }
+
+/* ───── RESULTS ───── */
+#screen-results { padding: 0; }
+
+.results-body { max-width: 900px; margin: 0 auto; padding: 48px 32px; }
+
+.results-hero { text-align: center; margin-bottom: 64px; }
+.results-score-ring {
+  width: 180px; height: 180px; margin: 0 auto 32px;
+  border-radius: 50%; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+}
+.results-score-ring svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+.score-number {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 56px; font-weight: 300;
+  color: var(--gold); line-height: 1;
+}
+.score-label { font-size: 10px; letter-spacing: 2px; color: var(--text-dim); }
+.results-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(28px, 5vw, 44px); font-weight: 300;
+  color: var(--white); margin-bottom: 12px;
+}
+.results-subtitle { font-size: 13px; color: var(--silver); letter-spacing: 1px; max-width: 500px; margin: 0 auto; line-height: 1.7; }
+
+.results-breakdown { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 48px; }
+
+.breakdown-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(201,168,76,0.1);
+  padding: 24px 20px;
+}
+.breakdown-module { font-size: 10px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 8px; }
+.breakdown-score-bar { height: 4px; background: rgba(255,255,255,0.08); margin: 12px 0; border-radius: 2px; overflow: hidden; }
+.breakdown-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
+.fill-gold { background: linear-gradient(90deg, #8a6020, var(--gold)); }
+.fill-silver { background: linear-gradient(90deg, #4a6688, var(--silver-light)); }
+.fill-teal { background: linear-gradient(90deg, #1a6060, #4ecdc4); }
+.breakdown-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px; font-weight: 300; color: var(--white);
+}
+
+.recommendations {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(201,168,76,0.1);
+  padding: 32px; margin-bottom: 32px;
+}
+.rec-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px; font-weight: 300; color: var(--gold-pale); margin-bottom: 24px;
+}
+.rec-item {
+  display: flex; gap: 16px; padding: 16px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.rec-item:last-child { border-bottom: none; }
+.rec-priority {
+  width: 8px; height: 8px; border-radius: 50%;
+  flex-shrink: 0; margin-top: 6px;
+}
+.priority-high { background: var(--danger); }
+.priority-med { background: var(--warning); }
+.priority-low { background: var(--success); }
+.rec-text { font-size: 13px; color: var(--silver-light); line-height: 1.7; }
+.rec-area { font-size: 10px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 4px; }
+
+.cta-box {
+  background: linear-gradient(135deg, rgba(201,168,76,0.1), rgba(168,184,200,0.05));
+  border: 1px solid rgba(201,168,76,0.3);
+  padding: 40px; text-align: center;
+}
+.cta-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px; font-weight: 300; color: var(--gold); margin-bottom: 12px;
+}
+.cta-sub { font-size: 13px; color: var(--silver); margin-bottom: 28px; line-height: 1.7; max-width: 480px; margin-left: auto; margin-right: auto; }
+.cta-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* ───── JOURNEY MAP ───── */
+.journey-wrap { margin-bottom: 32px; }
+.journey-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px; font-weight: 300; color: var(--white); margin-bottom: 8px;
+}
+.journey-sub { font-size: 12px; color: var(--text-dim); letter-spacing: 1px; margin-bottom: 32px; }
+
+.journey-stages { display: flex; overflow-x: auto; gap: 0; padding-bottom: 16px; }
+.journey-stage {
+  flex-shrink: 0; width: 180px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(201,168,76,0.1);
+  padding: 20px 16px; position: relative;
+  cursor: pointer; transition: all 0.2s;
+  margin-right: -1px;
+}
+.journey-stage:hover, .journey-stage.active {
+  background: rgba(201,168,76,0.08);
+  border-color: var(--gold); z-index: 1;
+}
+.stage-phase { font-size: 9px; letter-spacing: 2px; color: var(--gold); margin-bottom: 8px; }
+.stage-name { font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--white); margin-bottom: 8px; font-weight: 600; }
+.stage-emoji { font-size: 24px; margin-bottom: 8px; display: block; }
+.stage-score-mini {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10px; color: var(--text-dim);
+}
+.score-mini-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.stage-detail {
+  margin-top: 24px; padding: 24px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(201,168,76,0.1);
+  display: none;
+}
+.stage-detail.visible { display: block; }
+
+.touchpoints-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+.touchpoint {
+  padding: 16px 14px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(168,184,200,0.1);
+}
+.tp-name { font-size: 12px; color: var(--silver-light); margin-bottom: 6px; }
+.tp-rating { display: flex; gap: 3px; }
+.tp-star { color: rgba(201,168,76,0.3); font-size: 12px; }
+.tp-star.filled { color: var(--gold); }
+
+/* ───── ADMIN / QUESTION EDITOR ───── */
+.editor-wrap { }
+.editor-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px; font-weight: 300; color: var(--white); margin-bottom: 24px;
+}
+
+.q-module-tabs { display: flex; gap: 4px; margin-bottom: 24px; flex-wrap: wrap; }
+.q-mod-tab {
+  padding: 8px 16px; background: none;
+  border: 1px solid rgba(168,184,200,0.15);
+  color: var(--text-dim); font-family: 'Josefin Sans', sans-serif;
+  font-size: 10px; letter-spacing: 2px; cursor: pointer; transition: all 0.2s;
+}
+.q-mod-tab.active { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.08); }
+
+.q-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+
+.q-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 16px 20px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(168,184,200,0.1);
+  transition: all 0.2s;
+}
+.q-item:hover { border-color: rgba(201,168,76,0.2); }
+.q-drag { color: var(--text-dim); cursor: grab; font-size: 16px; padding-top: 2px; }
+.q-content { flex: 1; }
+.q-text { font-size: 13px; color: var(--silver-light); margin-bottom: 4px; line-height: 1.5; }
+.q-meta { display: flex; gap: 12px; align-items: center; }
+.q-type-badge {
+  font-size: 9px; letter-spacing: 1px; padding: 2px 8px;
+  border: 1px solid rgba(201,168,76,0.2); color: var(--text-dim);
+}
+.q-weight { font-size: 10px; color: var(--text-dim); }
+.q-actions { display: flex; gap: 6px; }
+.q-btn {
+  width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+  background: none; border: 1px solid rgba(168,184,200,0.15);
+  color: var(--text-dim); cursor: pointer; transition: all 0.2s; font-size: 12px;
+}
+.q-btn:hover { border-color: var(--gold); color: var(--gold); }
+.q-btn.del:hover { border-color: var(--danger); color: var(--danger); }
+
+.add-q-row {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;
+}
+
+/* ───── PRIVACY / LEGAL ───── */
+.legal-box {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(168,184,200,0.1);
+  padding: 32px; max-height: 400px; overflow-y: auto;
+  margin-bottom: 24px;
+}
+.legal-box h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px; color: var(--gold-pale); margin-bottom: 12px; margin-top: 24px;
+}
+.legal-box h3:first-child { margin-top: 0; }
+.legal-box p, .legal-box li { font-size: 12px; color: var(--text-dim); line-height: 1.8; margin-bottom: 8px; }
+.legal-box ul { padding-left: 20px; }
+
+/* ───── TOAST ───── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--navy-light); border: 1px solid var(--gold);
+  padding: 12px 20px; font-size: 12px; color: var(--gold);
+  letter-spacing: 1px; z-index: 9999;
+  animation: toast-in 0.3s ease; display: none;
+}
+@keyframes toast-in { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* ───── MODAL ───── */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(13,27,46,0.85);
+  display: none; align-items: center; justify-content: center;
+  z-index: 500; backdrop-filter: blur(4px); padding: 20px;
+}
+.modal-backdrop.open { display: flex; }
+.modal-box {
+  background: var(--navy-mid); border: 1px solid rgba(201,168,76,0.25);
+  padding: 36px; max-width: 500px; width: 100%;
+  max-height: 80vh; overflow-y: auto;
+}
+.modal-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px; color: var(--gold-pale); margin-bottom: 20px;
+}
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+/* ───── AD BANNER ───── */
+.ad-banner {
+  background: linear-gradient(135deg, rgba(22,37,64,0.9), rgba(13,27,46,0.95));
+  border: 1px solid rgba(168,184,200,0.1);
+  padding: 14px 20px; font-size: 11px; color: var(--text-dim);
+  text-align: center; letter-spacing: 1px;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  flex-wrap: wrap;
+}
+.ad-badge { font-size: 9px; letter-spacing: 1px; padding: 2px 8px; background: rgba(168,184,200,0.08); color: var(--text-dim); }
+
+/* ───── RESPONSIVE ───── */
+@media (max-width: 600px) {
+  .dashboard-content, .quiz-body, .results-body { padding: 20px 16px; }
+  .top-bar { padding: 12px 16px; }
+  .auth-box { padding: 32px 20px; }
+  .landing-cards { flex-direction: column; align-items: center; }
+}
+
+/* ───── SCROLLBAR ───── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); }
+</style>
+</head>
+<body>
+<div class="bg-stars"></div>
+
+<!-- ══════════════════════════════════ LANDING ══════════════════════════════════ -->
+<div id="screen-landing" class="screen active">
+  <div class="lang-toggle" style="position:absolute;top:20px;right:20px;">
+    <button class="lang-btn active" onclick="setLang('es')">ES</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+  </div>
+
+  <div class="landing-logo-wrap" id="logoWrap"></div>
+
+  <div class="landing-brand">LUMINI</div>
+  <div class="landing-tagline" data-es="Más Sonrisas, Más Beneficios" data-en="More Smiles, More Benefits">Más Sonrisas, Más Beneficios</div>
+
+  <div class="landing-subtitle" data-es="La plataforma de diagnóstico que transforma la experiencia de servicio en ventaja competitiva." data-en="The diagnostic platform that transforms service experience into competitive advantage.">
+    La plataforma de diagnóstico que transforma la experiencia de servicio en ventaja competitiva.
+  </div>
+
+  <div class="landing-cards">
+    <div class="landing-card" onclick="goAuth('company')">
+      <div class="card-icon">🏢</div>
+      <div class="card-title" data-es="Empresa" data-en="Business">Empresa</div>
+      <div class="card-desc" data-es="Diagnóstico completo · KPIs · Historial · Journey Map" data-en="Full diagnostic · KPIs · History · Journey Map">Diagnóstico completo · KPIs · Historial · Journey Map</div>
+    </div>
+    <div class="landing-card" onclick="goClientDiag()">
+      <div class="card-icon">😊</div>
+      <div class="card-title" data-es="Cliente" data-en="Customer">Cliente</div>
+      <div class="card-desc" data-es="Evalúa tu experiencia · Rápido y anónimo" data-en="Rate your experience · Quick & anonymous">Evalúa tu experiencia · Rápido y anónimo</div>
+    </div>
+    <div class="landing-card" onclick="showScreen('screen-legal')">
+      <div class="card-icon">🔒</div>
+      <div class="card-title" data-es="Privacidad" data-en="Privacy">Privacidad</div>
+      <div class="card-desc" data-es="Política de datos · GDPR · Términos" data-en="Data policy · GDPR · Terms">Política de datos · GDPR · Términos</div>
+    </div>
+  </div>
+
+  <div class="ad-banner">
+    <span class="ad-badge">PUBLICIDAD</span>
+    <span data-es="¿Sabías que el 68% de los clientes abandona por mala atención? Lumini Pro te ayuda a revertirlo." data-en="Did you know 68% of customers leave due to poor service? Lumini Pro helps you reverse it.">
+      ¿Sabías que el 68% de los clientes abandona por mala atención? Lumini Pro te ayuda a revertirlo.
+    </span>
+    <button class="btn-ghost" style="padding:6px 14px;font-size:9px;" data-es="VER MÁS" data-en="LEARN MORE">VER MÁS</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ AUTH ══════════════════════════════════ -->
+<div id="screen-auth" class="screen">
+  <div class="auth-box">
+    <div class="auth-logo">LUMINI</div>
+    <div class="auth-sub" data-es="PLATAFORMA DE DIAGNÓSTICO" data-en="DIAGNOSTIC PLATFORM">PLATAFORMA DE DIAGNÓSTICO</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')" data-es="INICIAR SESIÓN" data-en="SIGN IN">INICIAR SESIÓN</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')" data-es="REGISTRARSE" data-en="REGISTER">REGISTRARSE</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="auth-login">
+      <div class="form-group">
+        <label class="form-label" data-es="CORREO ELECTRÓNICO" data-en="EMAIL">CORREO ELECTRÓNICO</label>
+        <input class="form-input" type="email" placeholder="empresa@correo.com" id="login-email">
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-es="CONTRASEÑA" data-en="PASSWORD">CONTRASEÑA</label>
+        <input class="form-input" type="password" placeholder="••••••••" id="login-pass">
+      </div>
+      <button class="btn-primary" onclick="doLogin()" data-es="INGRESAR" data-en="SIGN IN">INGRESAR</button>
+      <div class="auth-divider" data-es="— demo: use cualquier email / contraseña —" data-en="— demo: use any email / password —">— demo: use cualquier email / contraseña —</div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="auth-register" style="display:none;">
+      <div class="form-group">
+        <label class="form-label" data-es="NOMBRE DE LA EMPRESA" data-en="COMPANY NAME">NOMBRE DE LA EMPRESA</label>
+        <input class="form-input" type="text" placeholder="Hotel Aurora S.A." id="reg-company">
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-es="SECTOR ECONÓMICO" data-en="ECONOMIC SECTOR">SECTOR ECONÓMICO</label>
+        <select class="form-select" id="reg-sector">
+          <option value="" disabled selected data-es="— Selecciona tu sector —" data-en="— Select your sector —">— Selecciona tu sector —</option>
+          <option value="alojamiento" data-es="🏨 Alojamiento (Hotel, Hostal, Apart)" data-en="🏨 Accommodation (Hotel, Hostel, Apart)">🏨 Alojamiento (Hotel, Hostal, Apart)</option>
+          <option value="restaurante" data-es="🍽️ Restaurante / Hostelería" data-en="🍽️ Restaurant / Hospitality">🍽️ Restaurante / Hostelería</option>
+          <option value="vina" data-es="🍷 Viña / Enoturismo" data-en="🍷 Winery / Wine Tourism">🍷 Viña / Enoturismo</option>
+          <option value="retail" data-es="🛍️ Retail / Comercio" data-en="🛍️ Retail / Commerce">🛍️ Retail / Comercio</option>
+          <option value="otro" data-es="⚙️ Otro sector" data-en="⚙️ Other sector">⚙️ Otro sector</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-es="CORREO ELECTRÓNICO" data-en="EMAIL">CORREO ELECTRÓNICO</label>
+        <input class="form-input" type="email" placeholder="contacto@empresa.com" id="reg-email">
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-es="CONTRASEÑA" data-en="PASSWORD">CONTRASEÑA</label>
+        <input class="form-input" type="password" placeholder="Mín. 8 caracteres" id="reg-pass">
+      </div>
+      <button class="btn-primary" onclick="doRegister()" data-es="CREAR CUENTA" data-en="CREATE ACCOUNT">CREAR CUENTA</button>
+    </div>
+
+    <div style="margin-top:16px;text-align:center;">
+      <button class="btn-ghost" onclick="showScreen('screen-landing')" style="font-size:10px;" data-es="← VOLVER" data-en="← BACK">← VOLVER</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ DASHBOARD ══════════════════════════════════ -->
+<div id="screen-dashboard" class="screen">
+  <div class="top-bar">
+    <div class="top-bar-brand">LUMINI</div>
+    <div class="top-bar-user">
+      <span class="user-name" id="user-display">Hotel Aurora</span>
+      <div class="user-avatar" id="user-avatar">H</div>
+      <button class="btn-ghost" style="padding:6px 12px;font-size:9px;" onclick="doLogout()" data-es="SALIR" data-en="SIGN OUT">SALIR</button>
+    </div>
+  </div>
+
+  <div class="dashboard-content">
+    <div class="dash-greeting" id="dash-greeting">Bienvenido, <span id="company-name">Hotel Aurora</span></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:40px;">
+      <div class="dash-date" id="dash-date" style="margin-bottom:0;"></div>
+      <div id="dash-sector-badge" style="font-size:10px;letter-spacing:2px;color:var(--gold);padding:3px 10px;border:1px solid rgba(201,168,76,0.3);background:rgba(201,168,76,0.06);"></div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label" data-es="SCORE GLOBAL" data-en="GLOBAL SCORE">SCORE GLOBAL</div>
+        <div class="kpi-value gold">74</div>
+        <div class="kpi-delta up">↑ +6 pts vs. diagnóstico anterior</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label" data-es="FUNDAMENTOS" data-en="FUNDAMENTALS">FUNDAMENTOS</div>
+        <div class="kpi-value silver">81</div>
+        <div class="kpi-delta up">↑ +4 pts</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label" data-es="JOURNEY SCORE" data-en="JOURNEY SCORE">JOURNEY SCORE</div>
+        <div class="kpi-value warn">68</div>
+        <div class="kpi-delta up">↑ +9 pts</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label" data-es="NIVEL EXPERIENCIA" data-en="EXPERIENCE LEVEL">NIVEL EXPERIENCIA</div>
+        <div class="kpi-value good">72</div>
+        <div class="kpi-delta up">↑ +7 pts</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label" data-es="DIAGNÓSTICOS CLIENTES" data-en="CLIENT SURVEYS">DIAGNÓSTICOS CLIENTES</div>
+        <div class="kpi-value silver">23</div>
+        <div class="kpi-delta up">↑ 8 nuevos</div>
+      </div>
+    </div>
+
+    <!-- NAV TABS -->
+    <div class="dash-nav">
+      <button class="dash-tab active" onclick="switchTab('overview')" data-es="RESUMEN" data-en="OVERVIEW">RESUMEN</button>
+      <button class="dash-tab" onclick="switchTab('diagnostic')" data-es="DIAGNÓSTICO" data-en="DIAGNOSTIC">DIAGNÓSTICO</button>
+      <button class="dash-tab" onclick="switchTab('journey')" data-es="JOURNEY MAP" data-en="JOURNEY MAP">JOURNEY MAP</button>
+      <button class="dash-tab" onclick="switchTab('history')" data-es="HISTORIAL" data-en="HISTORY">HISTORIAL</button>
+      <button class="dash-tab" onclick="switchTab('questions')" data-es="GESTIONAR PREGUNTAS" data-en="MANAGE QUESTIONS">GESTIONAR PREGUNTAS</button>
+      <button class="dash-tab" onclick="switchTab('clients')" data-es="CLIENTES" data-en="CLIENTS">CLIENTES</button>
+    </div>
+
+    <!-- ── OVERVIEW ── -->
+    <div class="dash-panel active" id="panel-overview">
+      <div class="chart-wrap">
+        <div class="chart-title" data-es="Evolución de Scores — Últimos 6 Diagnósticos" data-en="Score Evolution — Last 6 Diagnostics">Evolución de Scores — Últimos 6 Diagnósticos</div>
+        <div class="chart-bars" id="overview-chart"></div>
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div><span data-es="Fundamentos" data-en="Fundamentals">Fundamentos</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--silver-light)"></div><span data-es="Journey" data-en="Journey">Journey</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#4ecdc4"></div><span data-es="Experiencia" data-en="Experience">Experiencia</span></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;">
+        <div class="recommendations">
+          <div class="rec-title" data-es="🔑 Acciones Prioritarias" data-en="🔑 Priority Actions">🔑 Acciones Prioritarias</div>
+          <div class="rec-item">
+            <div class="rec-priority priority-high"></div>
+            <div><div class="rec-area" data-es="JOURNEY — POST-SERVICIO" data-en="JOURNEY — POST-SERVICE">JOURNEY — POST-SERVICIO</div><div class="rec-text" data-es="Implementar protocolo de seguimiento post-visita: email de agradecimiento + encuesta de 3 preguntas dentro de las 24 hrs." data-en="Implement post-visit follow-up protocol: thank-you email + 3-question survey within 24 hrs.">Implementar protocolo de seguimiento post-visita: email de agradecimiento + encuesta de 3 preguntas dentro de las 24 hrs.</div></div>
+          </div>
+          <div class="rec-item">
+            <div class="rec-priority priority-high"></div>
+            <div><div class="rec-area" data-es="FUNDAMENTOS — QUEJAS" data-en="FUNDAMENTALS — COMPLAINTS">FUNDAMENTOS — QUEJAS</div><div class="rec-text" data-es="Establecer y documentar un protocolo formal de gestión de quejas con tiempos de respuesta definidos." data-en="Establish and document a formal complaint management protocol with defined response times.">Establecer y documentar un protocolo formal de gestión de quejas con tiempos de respuesta definidos.</div></div>
+          </div>
+          <div class="rec-item">
+            <div class="rec-priority priority-med"></div>
+            <div><div class="rec-area" data-es="EXPERIENCIA — PERSONALIZACIÓN" data-en="EXPERIENCE — PERSONALIZATION">EXPERIENCIA — PERSONALIZACIÓN</div><div class="rec-text" data-es="Capacitar al equipo en reconocimiento de clientes recurrentes y personalización básica del saludo." data-en="Train team on recognizing returning customers and basic personalized greetings.">Capacitar al equipo en reconocimiento de clientes recurrentes y personalización básica del saludo.</div></div>
+          </div>
+        </div>
+
+        <div class="recommendations">
+          <div class="rec-title" data-es="📊 Percepción Empresa vs. Cliente" data-en="📊 Business vs. Customer Perception">📊 Percepción Empresa vs. Cliente</div>
+          <div style="padding:12px 0;">
+            <div style="margin-bottom:16px;">
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);margin-bottom:6px;">
+                <span data-es="Calidad de atención" data-en="Service quality">Calidad de atención</span>
+                <span style="color:var(--silver)">Empresa 85 / Cliente 71</span>
+              </div>
+              <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;position:relative;">
+                <div style="height:100%;width:85%;background:var(--gold);opacity:0.4;border-radius:3px;"></div>
+                <div style="position:absolute;top:0;height:100%;width:71%;background:var(--silver-light);border-radius:3px;opacity:0.7;"></div>
+              </div>
+            </div>
+            <div style="margin-bottom:16px;">
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);margin-bottom:6px;">
+                <span data-es="Ambiente / Espacio" data-en="Ambiance / Space">Ambiente / Espacio</span>
+                <span style="color:var(--silver)">Empresa 78 / Cliente 74</span>
+              </div>
+              <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;position:relative;">
+                <div style="height:100%;width:78%;background:var(--gold);opacity:0.4;border-radius:3px;"></div>
+                <div style="position:absolute;top:0;height:100%;width:74%;background:var(--silver-light);border-radius:3px;opacity:0.7;"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);margin-bottom:6px;">
+                <span data-es="Resolución de problemas" data-en="Problem resolution">Resolución de problemas</span>
+                <span style="color:var(--silver)">Empresa 70 / Cliente 48</span>
+              </div>
+              <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;position:relative;">
+                <div style="height:100%;width:70%;background:var(--gold);opacity:0.4;border-radius:3px;"></div>
+                <div style="position:absolute;top:0;height:100%;width:48%;background:var(--silver-light);border-radius:3px;opacity:0.7;"></div>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:10px;color:var(--text-dim);margin-top:8px;letter-spacing:1px;" data-es="🟡 Dorado = Empresa  |  🔘 Plateado = Cliente" data-en="🟡 Gold = Business  |  🔘 Silver = Customer">🟡 Dorado = Empresa  |  🔘 Plateado = Cliente</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DIAGNOSTIC ── -->
+    <div class="dash-panel" id="panel-diagnostic">
+      <div class="diag-section-header">
+        <div class="diag-section-title" data-es="Módulos de Diagnóstico" data-en="Diagnostic Modules">Módulos de Diagnóstico</div>
+        <button class="btn-secondary" onclick="startQuiz(0)" data-es="INICIAR NUEVO DIAGNÓSTICO" data-en="START NEW DIAGNOSTIC">INICIAR NUEVO DIAGNÓSTICO</button>
+      </div>
+      <div class="diag-modules">
+        <!-- MÓDULO 01 — ACTIVO -->
+        <div class="module-card" onclick="startQuiz(0)">
+          <div class="module-num">01</div>
+          <div class="module-icon">🔍</div>
+          <div class="module-name" data-es="Fundamentos del Servicio" data-en="Service Fundamentals">Fundamentos del Servicio</div>
+          <div class="module-desc" data-es="¿Tu negocio tiene las bases bien puestas? Revisamos protocolos, equipo y procesos básicos." data-en="Does your business have solid foundations? We review protocols, team and basic processes.">¿Tu negocio tiene las bases bien puestas? Revisamos protocolos, equipo y procesos básicos.</div>
+          <div class="module-meta">
+            <span class="module-q-count" data-es="13 preguntas · ~5 min" data-en="13 questions · ~5 min">13 preguntas · ~5 min</span>
+            <span class="module-status status-pending" data-es="DISPONIBLE" data-en="AVAILABLE">DISPONIBLE</span>
+          </div>
+        </div>
+        <!-- MÓDULO 02 — ACTIVO -->
+        <div class="module-card" onclick="startQuiz(1)">
+          <div class="module-num">02</div>
+          <div class="module-icon">🗺️</div>
+          <div class="module-name" data-es="Viaje del Cliente" data-en="Customer Journey">Viaje del Cliente</div>
+          <div class="module-desc" data-es="¿Qué vive el cliente desde que te descubre hasta después de su visita? Analizamos cada paso." data-en="What does the customer experience from discovering you to after their visit? We analyze each step.">¿Qué vive el cliente desde que te descubre hasta después de su visita? Analizamos cada paso.</div>
+          <div class="module-meta">
+            <span class="module-q-count" data-es="9 preguntas · ~4 min" data-en="9 questions · ~4 min">9 preguntas · ~4 min</span>
+            <span class="module-status status-pending" data-es="DISPONIBLE" data-en="AVAILABLE">DISPONIBLE</span>
+          </div>
+        </div>
+        <!-- MÓDULO 03 — MAQUETA / PRÓXIMAMENTE -->
+        <div class="module-card" style="opacity:0.55;cursor:default;position:relative;" onclick="showToast(state.lang==='es'?'Módulo disponible pronto en versión Pro':'Module coming soon in Pro version')">
+          <div style="position:absolute;top:12px;right:12px;font-size:18px;">🔒</div>
+          <div class="module-num" style="opacity:0.4">03</div>
+          <div class="module-icon">⭐</div>
+          <div class="module-name" data-es="Nivel de Experiencia" data-en="Experience Level">Nivel de Experiencia</div>
+          <div class="module-desc" data-es="¿Tu servicio genera momentos memorables? Medimos hospitalidad, sorpresa y personalización." data-en="Does your service create memorable moments? We measure hospitality, surprise and personalization.">¿Tu servicio genera momentos memorables? Medimos hospitalidad, sorpresa y personalización.</div>
+          <div class="module-meta">
+            <span class="module-q-count" data-es="15 preguntas · ~6 min" data-en="15 questions · ~6 min">15 preguntas · ~6 min</span>
+            <span class="module-status" style="color:var(--text-dim);border:1px solid rgba(168,184,200,0.15);" data-es="PRO" data-en="PRO">PRO</span>
+          </div>
+        </div>
+        <!-- MÓDULO 04 — MAQUETA -->
+        <div class="module-card" style="opacity:0.45;cursor:default;" onclick="showToast(state.lang==='es'?'Módulo disponible pronto en versión Pro':'Module coming soon in Pro version')">
+          <div style="position:absolute;top:12px;right:12px;font-size:18px;">🔒</div>
+          <div class="module-num" style="opacity:0.4">04</div>
+          <div class="module-icon">📊</div>
+          <div class="module-name" data-es="Benchmarking por Sector" data-en="Sector Benchmarking">Benchmarking por Sector</div>
+          <div class="module-desc" data-es="Compara tu puntuación con otros negocios de tu sector. ¿Estás por arriba o por debajo del promedio?" data-en="Compare your score with other businesses in your sector. Are you above or below average?">Compara tu puntuación con otros negocios de tu sector. ¿Estás por arriba o por debajo del promedio?</div>
+          <div class="module-meta">
+            <span class="module-q-count" data-es="Datos sectoriales" data-en="Sector data">Datos sectoriales</span>
+            <span class="module-status" style="color:var(--text-dim);border:1px solid rgba(168,184,200,0.15);" data-es="PRO" data-en="PRO">PRO</span>
+          </div>
+        </div>
+        <!-- MÓDULO 05 — MAQUETA -->
+        <div class="module-card" style="opacity:0.4;cursor:default;" onclick="showToast(state.lang==='es'?'Módulo disponible pronto en versión Pro':'Module coming soon in Pro version')">
+          <div style="position:absolute;top:12px;right:12px;font-size:18px;">🔒</div>
+          <div class="module-num" style="opacity:0.4">05</div>
+          <div class="module-icon">🤝</div>
+          <div class="module-name" data-es="Percepción Empresa vs. Cliente" data-en="Business vs. Customer Perception">Percepción Empresa vs. Cliente</div>
+          <div class="module-desc" data-es="¿Crees que das un 8? Tus clientes quizás dicen 5. Descubre la brecha real entre lo que crees y lo que sienten." data-en="You think you score an 8? Your customers might say 5. Discover the real gap between what you think and what they feel.">¿Crees que das un 8? Tus clientes quizás dicen 5. Descubre la brecha real.</div>
+          <div class="module-meta">
+            <span class="module-q-count" data-es="Empresa + Clientes" data-en="Business + Customers">Empresa + Clientes</span>
+            <span class="module-status" style="color:var(--text-dim);border:1px solid rgba(168,184,200,0.15);" data-es="PRO" data-en="PRO">PRO</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── JOURNEY MAP ── -->
+    <div class="dash-panel" id="panel-journey">
+      <div class="journey-wrap">
+        <div class="journey-title" data-es="Customer Journey Map" data-en="Customer Journey Map">Customer Journey Map</div>
+        <div class="journey-sub" data-es="Selecciona una etapa para ver los detalles y puntos de contacto" data-en="Select a stage to view details and touchpoints">Selecciona una etapa para ver los detalles y puntos de contacto</div>
+
+        <div class="journey-stages" id="journey-stages"></div>
+        <div class="stage-detail" id="stage-detail">
+          <div id="stage-detail-content"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── HISTORY ── -->
+    <div class="dash-panel" id="panel-history">
+      <div class="chart-wrap">
+        <div class="chart-title" data-es="Historial Completo de Diagnósticos" data-en="Full Diagnostic History">Historial Completo de Diagnósticos</div>
+        <div id="history-table"></div>
+      </div>
+    </div>
+
+    <!-- ── QUESTIONS EDITOR ── -->
+    <div class="dash-panel" id="panel-questions">
+      <div class="editor-wrap">
+        <div class="editor-title" data-es="Gestionar Preguntas" data-en="Manage Questions">Gestionar Preguntas</div>
+        <div class="q-module-tabs" id="q-module-tabs"></div>
+        <div class="q-list" id="q-list"></div>
+        <div class="add-q-row">
+          <button class="btn-secondary" onclick="openAddQuestion()" data-es="+ AÑADIR PREGUNTA" data-en="+ ADD QUESTION">+ AÑADIR PREGUNTA</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CLIENTS ── -->
+    <div class="dash-panel" id="panel-clients">
+      <div class="chart-title" style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--white);margin-bottom:24px;" data-es="Diagnósticos de Clientes" data-en="Client Diagnostics">Diagnósticos de Clientes</div>
+      <div id="clients-list"></div>
+      <div style="margin-top:24px;">
+        <button class="btn-secondary" onclick="copyClientLink()" data-es="📋 COPIAR ENLACE PARA CLIENTES" data-en="📋 COPY CLIENT LINK">📋 COPIAR ENLACE PARA CLIENTES</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ QUIZ ══════════════════════════════════ -->
+<div id="screen-quiz" class="screen">
+  <div class="quiz-header">
+    <button class="btn-ghost" style="padding:6px 14px;font-size:10px;" onclick="exitQuiz()" data-es="← SALIR" data-en="← EXIT">← SALIR</button>
+    <div class="quiz-progress-wrap">
+      <div class="quiz-progress-label">
+        <span id="quiz-module-title">Fundamentos</span>
+        <span id="quiz-progress-text">1 / 13</span>
+      </div>
+      <div class="quiz-progress-bar">
+        <div class="quiz-progress-fill" id="quiz-progress-fill" style="width:8%"></div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text-dim);" id="quiz-mode-label">EMPRESA</div>
+  </div>
+
+  <div class="quiz-body">
+    <div class="quiz-module-label" id="q-module-label">MÓDULO 01 — FUNDAMENTOS</div>
+    <div class="quiz-q-num" id="q-num">Pregunta 1 de 13</div>
+    <div class="quiz-question" id="q-text">¿La empresa cuenta con un protocolo formal de bienvenida al cliente?</div>
+    <div id="q-options-wrap"></div>
+    <div class="quiz-nav">
+      <button class="btn-ghost" id="btn-prev" onclick="prevQuestion()">← ANTERIOR</button>
+      <button class="btn-primary" id="btn-next" onclick="nextQuestion()" style="width:auto;padding:12px 32px;">SIGUIENTE →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ RESULTS ══════════════════════════════════ -->
+<div id="screen-results" class="screen">
+  <div class="top-bar">
+    <div class="top-bar-brand">LUMINI</div>
+    <button class="btn-ghost" style="padding:6px 14px;font-size:10px;" onclick="showScreen('screen-dashboard');switchTab('overview')">← DASHBOARD</button>
+  </div>
+  <div class="results-body">
+    <div class="results-hero">
+      <div class="results-score-ring">
+        <svg width="180" height="180" viewBox="0 0 180 180">
+          <circle cx="90" cy="90" r="80" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="8"/>
+          <circle cx="90" cy="90" r="80" fill="none" stroke="url(#scoreGrad)" stroke-width="8"
+            stroke-dasharray="502" stroke-dashoffset="128" stroke-linecap="round" id="score-circle"/>
+          <defs>
+            <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#8a6020"/>
+              <stop offset="100%" stop-color="#e8c96a"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="score-number" id="result-score">74</div>
+        <div class="score-label" data-es="SCORE GLOBAL" data-en="GLOBAL SCORE">SCORE GLOBAL</div>
+      </div>
+      <div class="results-title" id="result-level">Servicio en Desarrollo</div>
+      <div class="results-subtitle" id="result-desc">Tu organización muestra bases sólidas pero con oportunidades importantes de mejora en la personalización y el seguimiento post-servicio.</div>
+    </div>
+
+    <div class="results-breakdown">
+      <div class="breakdown-card">
+        <div class="breakdown-module" data-es="FUNDAMENTOS" data-en="FUNDAMENTALS">FUNDAMENTOS</div>
+        <div class="breakdown-value" id="res-fund">81</div>
+        <div class="breakdown-score-bar"><div class="breakdown-fill fill-gold" style="width:81%"></div></div>
+      </div>
+      <div class="breakdown-card">
+        <div class="breakdown-module" data-es="JOURNEY" data-en="JOURNEY">JOURNEY</div>
+        <div class="breakdown-value" id="res-journey">68</div>
+        <div class="breakdown-score-bar"><div class="breakdown-fill fill-silver" style="width:68%"></div></div>
+      </div>
+      <div class="breakdown-card">
+        <div class="breakdown-module" data-es="EXPERIENCIA" data-en="EXPERIENCE">EXPERIENCIA</div>
+        <div class="breakdown-value" id="res-exp">72</div>
+        <div class="breakdown-score-bar"><div class="breakdown-fill fill-teal" style="width:72%"></div></div>
+      </div>
+    </div>
+
+    <div class="recommendations" id="result-recs">
+      <div class="rec-title" data-es="Recomendaciones de Mejora" data-en="Improvement Recommendations">Recomendaciones de Mejora</div>
+    </div>
+
+    <div class="cta-box">
+      <div class="cta-title" data-es="¿Listo para transformar tu servicio?" data-en="Ready to transform your service?">¿Listo para transformar tu servicio?</div>
+      <div class="cta-sub" data-es="Nuestros consultores especializados en hospitalidad y experiencia de cliente te acompañarán en un plan de mejora personalizado, con métricas reales y resultados medibles." data-en="Our specialists in hospitality and customer experience will guide you through a personalized improvement plan with real metrics and measurable results.">Nuestros consultores especializados en hospitalidad y experiencia de cliente te acompañarán en un plan de mejora personalizado, con métricas reales y resultados medibles.</div>
+      <div class="cta-actions">
+        <button class="btn-primary" style="width:auto;padding:14px 32px;" onclick="showToast('¡Gracias! Un consultor se pondrá en contacto contigo pronto.')" data-es="CONTRATAR ASESORÍA" data-en="HIRE CONSULTING">CONTRATAR ASESORÍA</button>
+        <button class="btn-secondary" onclick="downloadReport()" data-es="DESCARGAR REPORTE PDF" data-en="DOWNLOAD PDF REPORT">DESCARGAR REPORTE PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ LEGAL ══════════════════════════════════ -->
+<div id="screen-legal" class="screen" style="padding:40px 20px;">
+  <div style="max-width:720px;margin:0 auto;width:100%;">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:32px;">
+      <button class="btn-ghost" onclick="showScreen('screen-landing')" style="font-size:10px;">← VOLVER</button>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--gold);">Política de Privacidad y Términos</div>
+    </div>
+    <div class="legal-box">
+      <h3>1. Identificación del Responsable</h3>
+      <p>Lumini — Plataforma de Diagnóstico de Experiencia de Servicio. Contacto: info@lumini.app</p>
+
+      <h3>2. Datos que Recopilamos</h3>
+      <ul>
+        <li><strong>Empresas (usuarios registrados):</strong> nombre de empresa, correo electrónico, sector, respuestas al diagnóstico, historial de scores.</li>
+        <li><strong>Clientes finales:</strong> respuestas al diagnóstico simplificado. No se recopila ningún dato de identificación personal. Los diagnósticos de clientes son completamente anónimos.</li>
+      </ul>
+
+      <h3>3. Finalidad del Tratamiento</h3>
+      <p>Los datos de empresas se utilizan exclusivamente para: (a) proporcionar el servicio de diagnóstico, (b) generar KPIs y reportes de evolución, (c) enviar comunicaciones relacionadas con el servicio contratado.</p>
+      <p>Los datos anónimos de clientes se utilizan para generar estadísticas agregadas visibles por la empresa evaluada.</p>
+
+      <h3>4. Base Legal (GDPR / Ley 19.628 Chile)</h3>
+      <p>El tratamiento se basa en el consentimiento explícito del usuario al momento del registro y en la ejecución del contrato de servicio. Los datos de empresas de la UE se tratan bajo el Reglamento (UE) 2016/679 (GDPR).</p>
+
+      <h3>5. Conservación de Datos</h3>
+      <p>Los datos se conservan mientras la cuenta esté activa. El usuario puede solicitar la eliminación completa de su cuenta y datos en cualquier momento.</p>
+
+      <h3>6. Derechos del Usuario</h3>
+      <ul>
+        <li>Derecho de acceso, rectificación, cancelación y oposición (ARCO)</li>
+        <li>Derecho de portabilidad y supresión (GDPR)</li>
+        <li>Derecho a retirar el consentimiento en cualquier momento</li>
+      </ul>
+      <p>Para ejercer estos derechos: privacidad@lumini.app</p>
+
+      <h3>7. Publicidad</h3>
+      <p>La versión gratuita de Lumini puede mostrar publicidad de terceros. Esta publicidad no utiliza datos personales de los usuarios para segmentación. Los usuarios con plan Pro tienen una experiencia libre de publicidad.</p>
+
+      <h3>8. Cookies</h3>
+      <p>Lumini utiliza cookies estrictamente necesarias para el funcionamiento de la sesión de usuario. No se utilizan cookies de seguimiento o analíticas de terceros sin consentimiento previo.</p>
+
+      <h3>9. Transferencias Internacionales</h3>
+      <p>En caso de usuarios de la UE, los datos se procesan dentro del Espacio Económico Europeo o en jurisdicciones con nivel de protección adecuado reconocido por la Comisión Europea.</p>
+
+      <h3>10. Modificaciones</h3>
+      <p>Lumini se reserva el derecho de actualizar esta política. Los usuarios serán notificados por correo ante cambios sustanciales.</p>
+    </div>
+    <button class="btn-primary" onclick="showScreen('screen-landing')" style="width:auto;padding:14px 32px;" data-es="ENTENDIDO" data-en="UNDERSTOOD">ENTENDIDO</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ MODALS ══════════════════════════════════ -->
+<div class="modal-backdrop" id="modal-add-q">
+  <div class="modal-box">
+    <div class="modal-title" data-es="Añadir Pregunta" data-en="Add Question">Añadir Pregunta</div>
+    <div class="form-group">
+      <label class="form-label" data-es="TEXTO DE LA PREGUNTA" data-en="QUESTION TEXT">TEXTO DE LA PREGUNTA</label>
+      <input class="form-input" type="text" id="new-q-text" placeholder="Escribe la pregunta aquí...">
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-es="TIPO DE RESPUESTA" data-en="ANSWER TYPE">TIPO DE RESPUESTA</label>
+      <select class="form-select" id="new-q-type">
+        <option value="options" data-es="Opción múltiple" data-en="Multiple choice">Opción múltiple</option>
+        <option value="scale" data-es="Escala 1–5" data-en="Scale 1–5">Escala 1–5</option>
+        <option value="yesno" data-es="Sí / No" data-en="Yes / No">Sí / No</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-es="MÓDULO" data-en="MODULE">MÓDULO</label>
+      <select class="form-select" id="new-q-module">
+        <option value="0" data-es="01 — Fundamentos del Servicio" data-en="01 — Service Fundamentals">01 — Fundamentos del Servicio</option>
+        <option value="1" data-es="02 — Mapeo del Consumidor" data-en="02 — Consumer Mapping">02 — Mapeo del Consumidor</option>
+        <option value="2" data-es="03 — Nivel de Experiencia" data-en="03 — Experience Level">03 — Nivel de Experiencia</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('modal-add-q')" data-es="CANCELAR" data-en="CANCEL">CANCELAR</button>
+      <button class="btn-primary" style="width:auto;padding:12px 24px;" onclick="saveNewQuestion()" data-es="GUARDAR" data-en="SAVE">GUARDAR</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════ STATE ══════════════════════════════════
+const state = {
+  lang: 'es',
+  user: null,
+  currentScreen: 'screen-landing',
+  activeTab: 'overview',
+  quiz: { moduleIndex: 0, questionIndex: 0, answers: [], mode: 'company' },
+  activeQModule: 0,
+  activeStage: -1,
+  questions: [
+    // MODULE 0 — FUNDAMENTOS (13 preguntas)
+    // Basado en Lou Downe "Good Services" + Guidara "Hospitalidad Irracional"
+    { id: 1, module: 0, text_es: '¿Tienes escrito en algún lugar cómo debe recibir el equipo a un cliente que llega por primera vez?', text_en: 'Do you have written instructions for how your team should welcome a first-time customer?', type: 'yesno' },
+    { id: 2, module: 0, text_es: '¿Con qué frecuencia capacitas a tu equipo en cómo atender bien a los clientes?', text_en: 'How often do you train your team on how to serve customers well?', type: 'options', opts_es: ['Nunca lo he hecho','Solo cuando hay problemas','Una vez al año','Varias veces al año'], opts_en: ['Never done it','Only when there are problems','Once a year','Several times a year'] },
+    { id: 3, module: 0, text_es: '¿Sabe tu equipo exactamente qué hacer cuando un cliente se queja o está molesto?', text_en: 'Does your team know exactly what to do when a customer complains or is upset?', type: 'yesno' },
+    { id: 4, module: 0, text_es: '¿Con qué frecuencia se reúne tu equipo para hablar sobre cómo mejorar el servicio?', text_en: 'How often does your team meet to discuss how to improve service?', type: 'options', opts_es: ['Nunca','De vez en cuando','Una vez al mes','Todas las semanas'], opts_en: ['Never','Occasionally','Once a month','Every week'] },
+    { id: 5, module: 0, text_es: '¿Los clientes saben cuánto tiempo van a esperar antes de ser atendidos?', text_en: 'Do customers know how long they will wait before being served?', type: 'yesno' },
+    { id: 6, module: 0, text_es: '¿Tu equipo sabe cómo debe vestirse y presentarse en el trabajo?', text_en: 'Does your team know how to dress and present themselves at work?', type: 'scale' },
+    { id: 7, module: 0, text_es: '¿Preguntas regularmente a tus clientes si están contentos con el servicio?', text_en: 'Do you regularly ask your customers if they are happy with the service?', type: 'options', opts_es: ['No lo hago','Solo si ellos dicen algo','A veces, sin un método','Sí, tengo un sistema'], opts_en: ['I don\'t','Only if they say something','Sometimes, no method','Yes, I have a system'] },
+    { id: 8, module: 0, text_es: '¿Cuando entra alguien nuevo al equipo, hay un proceso para enseñarle a dar buen servicio?', text_en: 'When someone new joins the team, is there a process to teach them good service?', type: 'yesno' },
+    { id: 9, module: 0, text_es: '¿Puedes explicar en una sola frase qué hace tu negocio diferente a los demás?', text_en: 'Can you explain in one sentence what makes your business different from others?', type: 'yesno' },
+    { id: 10, module: 0, text_es: '¿Cuando alguien del equipo hace algo excelente por un cliente, se lo reconoces públicamente?', text_en: 'When someone on the team does something excellent for a customer, do you publicly recognize it?', type: 'scale' },
+    { id: 11, module: 0, text_es: '¿El espacio donde atiendes a los clientes está siempre limpio y ordenado?', text_en: 'Is the space where you serve customers always clean and tidy?', type: 'scale' },
+    { id: 12, module: 0, text_es: '¿Los clientes saben qué pasa si algo sale mal — por ejemplo, si quieren que les devuelvan el dinero?', text_en: 'Do customers know what happens if something goes wrong — for example, if they want a refund?', type: 'yesno' },
+    { id: 13, module: 0, text_es: '¿Tu equipo sabe cómo reaccionar si un cliente tiene una emergencia o accidente dentro del local?', text_en: 'Does your team know how to react if a customer has an emergency or accident on the premises?', type: 'yesno' },
+    // MODULE 1 — JOURNEY — Mapeo del Consumidor (preguntas demo, módulo activo)
+    { id: 14, module: 1, text_es: '¿Si alguien busca tu negocio en Google ahora mismo, puede encontrarlo fácilmente?', text_en: 'If someone searches for your business on Google right now, can they find it easily?', type: 'scale' },
+    { id: 15, module: 1, text_es: '¿Es fácil para un cliente nuevo hacer una reserva o contactarte por primera vez?', text_en: 'Is it easy for a new customer to make a reservation or contact you for the first time?', type: 'options', opts_es: ['Muy difícil, varios pasos','Un poco confuso','Aceptable','Muy fácil, un solo paso'], opts_en: ['Very difficult, many steps','A bit confusing','Acceptable','Very easy, one step'] },
+    { id: 16, module: 1, text_es: '¿Avisas al cliente con anticipación si hay algo que deba saber antes de su visita?', text_en: 'Do you notify the customer in advance if there is anything they should know before their visit?', type: 'yesno' },
+    { id: 17, module: 1, text_es: '¿Después de que un cliente visita tu negocio, hay algún contacto para saber cómo le fue?', text_en: 'After a customer visits your business, is there any follow-up to find out how it went?', type: 'options', opts_es: ['Nunca','Raramente','A veces','Siempre'], opts_en: ['Never','Rarely','Sometimes','Always'] },
+    { id: 18, module: 1, text_es: '¿Pides activamente a los clientes satisfechos que te dejen una reseña o que recomienden el negocio?', text_en: 'Do you actively ask satisfied customers to leave a review or recommend the business?', type: 'yesno' },
+    { id: 19, module: 1, text_es: '¿La primera impresión al llegar (entrada, señalética, bienvenida) está cuidada y es acogedora?', text_en: 'Is the first impression upon arrival (entrance, signage, welcome) well-managed and welcoming?', type: 'scale' },
+    { id: 20, module: 1, text_es: '¿Haces algo especial para que el cliente se sienta recordado en su segunda visita?', text_en: 'Do you do something special to make the customer feel remembered on their second visit?', type: 'options', opts_es: ['No, cada visita es igual','A veces, sin plan','Sí, con algunos clientes','Sí, con todos'], opts_en: ['No, each visit is the same','Sometimes, no plan','Yes, with some customers','Yes, with everyone'] },
+    { id: 21, module: 1, text_es: '¿Cuando un cliente se va, hay un momento de despedida que sea memorable?', text_en: 'When a customer leaves, is there a farewell moment that is memorable?', type: 'yesno' },
+    // MODULE 2 — EXPERIENCE — Nivel de Experiencia (demo, bloqueado)
+    { id: 22, module: 2, text_es: '¿El cliente siente que lo tratan de forma única, no como a cualquier otro?', text_en: 'Does the customer feel they are treated uniquely, not like anyone else?', type: 'scale' },
+    { id: 23, module: 2, text_es: '¿Tu servicio genera en el cliente algo que quiera contar a sus amigos?', text_en: 'Does your service create something the customer wants to tell their friends about?', type: 'scale' },
+    { id: 24, module: 2, text_es: '¿Hay momentos sorpresa o gestos inesperados que hacen sonreír al cliente?', text_en: 'Are there surprise moments or unexpected gestures that make the customer smile?', type: 'options', opts_es: ['Nunca','Raramente','A veces','Siempre'], opts_en: ['Never','Rarely','Sometimes','Always'] },
+    { id: 25, module: 2, text_es: '¿El equipo anticipa lo que el cliente va a necesitar antes de que lo pida?', text_en: 'Does the team anticipate what the customer will need before they ask?', type: 'scale' },
+    { id: 26, module: 2, text_es: '¿La calidad del servicio es igual de buena todos los días, con todos los empleados?', text_en: 'Is the service quality equally good every day, with all employees?', type: 'scale' },
+  ]
+};
+
+const historyData = [
+  { date: '2024-10', fund: 65, journey: 52, exp: 58, total: 59 },
+  { date: '2024-12', fund: 70, journey: 55, exp: 60, total: 63 },
+  { date: '2025-02', fund: 74, journey: 59, exp: 63, total: 66 },
+  { date: '2025-04', fund: 77, journey: 62, exp: 67, total: 69 },
+  { date: '2025-06', fund: 79, journey: 62, exp: 70, total: 71 },
+  { date: '2025-08', fund: 81, journey: 68, exp: 72, total: 74 },
+];
+
+const journeyData = [
+  { phase_es: 'ANTES', phase_en: 'BEFORE', name_es: 'Descubrimiento', name_en: 'Discovery', emoji: '🔍', score: 72,
+    touchpoints_es: ['Redes Sociales','Búsqueda Google','Boca a Boca','Publicidad'], touchpoints_en: ['Social Media','Google Search','Word of Mouth','Advertising'], ratings: [4,3,5,3] },
+  { phase_es: 'ANTES', phase_en: 'BEFORE', name_es: 'Consideración', name_en: 'Consideration', emoji: '💭', score: 68,
+    touchpoints_es: ['Sitio Web','Reseñas','Fotos/Videos','Llamada/Chat'], touchpoints_en: ['Website','Reviews','Photos/Videos','Call/Chat'], ratings: [3,4,3,4] },
+  { phase_es: 'ANTES', phase_en: 'BEFORE', name_es: 'Reserva', name_en: 'Booking', emoji: '📋', score: 80,
+    touchpoints_es: ['Formulario Online','Teléfono','Email','App'], touchpoints_en: ['Online Form','Phone','Email','App'], ratings: [4,5,4,3] },
+  { phase_es: 'DURANTE', phase_en: 'DURING', name_es: 'Llegada', name_en: 'Arrival', emoji: '🚪', score: 85,
+    touchpoints_es: ['Señalética','Bienvenida','Check-in','Primeras impresiones'], touchpoints_en: ['Signage','Welcome','Check-in','First impressions'], ratings: [4,5,4,5] },
+  { phase_es: 'DURANTE', phase_en: 'DURING', name_es: 'Servicio Core', name_en: 'Core Service', emoji: '⭐', score: 78,
+    touchpoints_es: ['Atención del Personal','Producto/Servicio','Ambiente','Resolución de Dudas'], touchpoints_en: ['Staff Attention','Product/Service','Ambiance','Query Resolution'], ratings: [4,4,4,3] },
+  { phase_es: 'DURANTE', phase_en: 'DURING', name_es: 'Incidencias', name_en: 'Incidents', emoji: '⚡', score: 55,
+    touchpoints_es: ['Tiempo de Espera','Errores','Quejas','Soluciones'], touchpoints_en: ['Wait Times','Errors','Complaints','Solutions'], ratings: [3,2,3,3] },
+  { phase_es: 'DESPUÉS', phase_en: 'AFTER', name_es: 'Despedida', name_en: 'Farewell', emoji: '👋', score: 74,
+    touchpoints_es: ['Check-out','Despedida del Personal','Facilidad de Pago','Última Impresión'], touchpoints_en: ['Check-out','Staff Farewell','Payment Ease','Last Impression'], ratings: [4,4,4,4] },
+  { phase_es: 'DESPUÉS', phase_en: 'AFTER', name_es: 'Post-Servicio', name_en: 'Post-Service', emoji: '📧', score: 42,
+    touchpoints_es: ['Email Seguimiento','Encuesta Satisfacción','Programa Fidelidad','Recontacto'], touchpoints_en: ['Follow-up Email','Satisfaction Survey','Loyalty Program','Re-contact'], ratings: [2,2,2,2] },
+];
+
+const clientResponses = [
+  { id: 'C001', date: '2025-08-14', score: 78, highlight_es: 'Excelente atención del personal', highlight_en: 'Excellent staff attention' },
+  { id: 'C002', date: '2025-08-12', score: 65, highlight_es: 'Tiempos de espera muy largos', highlight_en: 'Very long wait times' },
+  { id: 'C003', date: '2025-08-11', score: 82, highlight_es: 'Ambiente muy agradable', highlight_en: 'Very pleasant atmosphere' },
+  { id: 'C004', date: '2025-08-09', score: 70, highlight_es: 'Buen servicio, faltó seguimiento', highlight_en: 'Good service, lacked follow-up' },
+  { id: 'C005', date: '2025-08-07', score: 90, highlight_es: 'Experiencia memorable', highlight_en: 'Memorable experience' },
+];
+
+// ══════════════════════════════════ LANG ══════════════════════════════════
+function setLang(l) {
+  state.lang = l;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === l.toUpperCase()));
+  document.querySelectorAll('[data-es]').forEach(el => {
+    el.textContent = el.dataset[l] || el.dataset.es;
+  });
+}
+
+// ══════════════════════════════════ NAVIGATION ══════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  state.currentScreen = id;
+}
+
+function goAuth(type) {
+  state.authType = type;
+  showScreen('screen-auth');
+}
+
+function goClientDiag() {
+  state.quiz.mode = 'client';
+  state.quiz.moduleIndex = 0;
+  state.quiz.questionIndex = 0;
+  state.quiz.answers = [];
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+// ══════════════════════════════════ AUTH ══════════════════════════════════
+function switchAuthTab(tab) {
+  document.getElementById('auth-login').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('auth-register').style.display = tab === 'register' ? 'block' : 'none';
+  document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === (tab === 'login')));
+}
+
+const SECTOR_LABELS = {
+  alojamiento: { es: '🏨 Alojamiento', en: '🏨 Accommodation' },
+  restaurante:  { es: '🍽️ Restaurante / Hostelería', en: '🍽️ Restaurant / Hospitality' },
+  vina:         { es: '🍷 Viña / Enoturismo', en: '🍷 Winery / Wine Tourism' },
+  retail:       { es: '🛍️ Retail', en: '🛍️ Retail' },
+  otro:         { es: '⚙️ Otro', en: '⚙️ Other' }
+};
+
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  if (!email || !pass) { showToast(state.lang === 'es' ? 'Ingresa email y contraseña.' : 'Enter email and password.'); return; }
+  if (!window._fb) { _fallbackLogin(email); return; }
+  const { auth, signInWithEmailAndPassword, db, ref, get } = window._fb;
+  signInWithEmailAndPassword(auth, email, pass)
+    .then(cred => {
+      return get(ref(db, 'users/' + cred.user.uid)).then(snap => {
+        const data = snap.exists() ? snap.val() : {};
+        state.user = { email, company: data.company || email.split('@')[0], sector: data.sector || 'otro', plan: data.plan || 'free', uid: cred.user.uid };
+        loadDashboard();
+        showScreen('screen-dashboard');
+      });
+    })
+    .catch(err => {
+      const msg = err.code === 'auth/invalid-credential' ? (state.lang==='es'?'Email o contraseña incorrectos.':'Wrong email or password.') : err.message;
+      showToast('⚠️ ' + msg);
+    });
+}
+
+function doRegister() {
+  const company = document.getElementById('reg-company').value.trim();
+  const sector  = document.getElementById('reg-sector').value;
+  const email   = document.getElementById('reg-email').value.trim();
+  const pass    = document.getElementById('reg-pass').value;
+  if (!company || !sector || !email || !pass) { showToast(state.lang==='es'?'Completa todos los campos.':'Fill in all fields.'); return; }
+  if (pass.length < 6) { showToast(state.lang==='es'?'La contraseña debe tener al menos 6 caracteres.':'Password must be at least 6 characters.'); return; }
+  if (!window._fb) { _fallbackRegister(company, sector, email); return; }
+  const { auth, createUserWithEmailAndPassword, db, ref, set } = window._fb;
+  createUserWithEmailAndPassword(auth, email, pass)
+    .then(cred => {
+      return set(ref(db, 'users/' + cred.user.uid), { company, sector, email, plan: 'free', createdAt: Date.now() }).then(() => {
+        state.user = { email, company, sector, plan: 'free', uid: cred.user.uid };
+        loadDashboard();
+        showScreen('screen-dashboard');
+        showToast(state.lang==='es'?'¡Cuenta creada! Bienvenido a Lumini.':'Account created! Welcome to Lumini.');
+      });
+    })
+    .catch(err => {
+      const msg = err.code === 'auth/email-already-in-use' ? (state.lang==='es'?'Ese email ya está registrado.':'That email is already registered.') : err.message;
+      showToast('⚠️ ' + msg);
+    });
+}
+
+function _fallbackLogin(email) {
+  state.user = { email, company: email.split('@')[0], sector: 'otro', plan: 'free', uid: 'demo' };
+  loadDashboard(); showScreen('screen-dashboard');
+}
+function _fallbackRegister(company, sector, email) {
+  state.user = { email, company, sector, plan: 'free', uid: 'demo' };
+  loadDashboard(); showScreen('screen-dashboard');
+  showToast(state.lang==='es'?'¡Bienvenido a Lumini (modo demo)!':'Welcome to Lumini (demo mode)!');
+}
+
+function doLogout() {
+  if (window._fb) window._fb.signOut(window._fb.auth).catch(()=>{});
+  state.user = null;
+  showScreen('screen-landing');
+}
+
+// ══════════════════════════════════ DASHBOARD ══════════════════════════════════
+function loadDashboard() {
+  if (!state.user) return;
+  document.getElementById('user-display').textContent = state.user.company;
+  document.getElementById('company-name').textContent = state.user.company;
+  document.getElementById('user-avatar').textContent = state.user.company[0].toUpperCase();
+  const now = new Date();
+  const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  document.getElementById('dash-date').textContent = now.toLocaleDateString(state.lang === 'es' ? 'es-CL' : 'en-US', opts).toUpperCase();
+  document.getElementById('dash-greeting').innerHTML = (state.lang === 'es' ? 'Bienvenido, ' : 'Welcome, ') + '<span id="company-name">' + state.user.company + '</span>';
+  
+  // Show sector badge
+  const sectorKey = state.user.sector || 'otro';
+  const sectorLabel = SECTOR_LABELS[sectorKey] ? SECTOR_LABELS[sectorKey][state.lang] : sectorKey;
+  const sectorEl = document.getElementById('dash-sector-badge');
+  if (sectorEl) sectorEl.textContent = sectorLabel;
+  
+  renderOverviewChart();
+  renderJourneyMap();
+  renderHistory();
+  renderQEditor();
+  renderClients();
+}
+
+function switchTab(tab) {
+  state.activeTab = tab;
+  document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.dash-panel').forEach(p => p.classList.remove('active'));
+  const tabEls = document.querySelectorAll('.dash-tab');
+  const tabs = ['overview','diagnostic','journey','history','questions','clients'];
+  const idx = tabs.indexOf(tab);
+  if (tabEls[idx]) tabEls[idx].classList.add('active');
+  const panel = document.getElementById('panel-' + tab);
+  if (panel) panel.classList.add('active');
+}
+
+// ══════════════════════════════════ CHART ══════════════════════════════════
+function renderOverviewChart() {
+  const wrap = document.getElementById('overview-chart');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const maxH = 140;
+  historyData.forEach(d => {
+    const g = document.createElement('div');
+    g.className = 'chart-bar-group';
+    g.innerHTML = `
+      <div style="display:flex;gap:3px;align-items:flex-end;height:${maxH}px;width:100%;">
+        <div class="chart-bar gold-bar" style="height:${d.fund/100*maxH}px;flex:1" title="Fund: ${d.fund}"></div>
+        <div class="chart-bar silver-bar" style="height:${d.journey/100*maxH}px;flex:1" title="Journey: ${d.journey}"></div>
+        <div class="chart-bar teal-bar" style="height:${d.exp/100*maxH}px;flex:1" title="Exp: ${d.exp}"></div>
+      </div>
+      <div class="chart-label">${d.date}</div>`;
+    wrap.appendChild(g);
+  });
+}
+
+// ══════════════════════════════════ JOURNEY MAP ══════════════════════════════════
+function renderJourneyMap() {
+  const wrap = document.getElementById('journey-stages');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  journeyData.forEach((s, i) => {
+    const color = s.score >= 75 ? 'var(--success)' : s.score >= 60 ? 'var(--warning)' : 'var(--danger)';
+    const div = document.createElement('div');
+    div.className = 'journey-stage' + (state.activeStage === i ? ' active' : '');
+    div.onclick = () => openStage(i);
+    div.innerHTML = `
+      <div class="stage-phase">${state.lang === 'es' ? s.phase_es : s.phase_en}</div>
+      <span class="stage-emoji">${s.emoji}</span>
+      <div class="stage-name">${state.lang === 'es' ? s.name_es : s.name_en}</div>
+      <div class="stage-score-mini">
+        <div class="score-mini-dot" style="background:${color}"></div>
+        <span style="color:${color}">${s.score}</span>
+      </div>`;
+    wrap.appendChild(div);
+  });
+}
+
+function openStage(i) {
+  state.activeStage = i;
+  renderJourneyMap();
+  const s = journeyData[i];
+  const detail = document.getElementById('stage-detail');
+  const content = document.getElementById('stage-detail-content');
+  const tps = state.lang === 'es' ? s.touchpoints_es : s.touchpoints_en;
+  content.innerHTML = `
+    <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--gold-pale);margin-bottom:20px;">
+      ${s.emoji} ${state.lang === 'es' ? s.name_es : s.name_en} — Score: <span style="color:var(--gold)">${s.score}</span>
+    </div>
+    <div class="touchpoints-grid">
+      ${tps.map((tp, j) => `
+        <div class="touchpoint">
+          <div class="tp-name">${tp}</div>
+          <div class="tp-rating">${[1,2,3,4,5].map(k => `<span class="tp-star ${k <= s.ratings[j] ? 'filled' : ''}">★</span>`).join('')}</div>
+        </div>`).join('')}
+    </div>`;
+  detail.classList.add('visible');
+}
+
+// ══════════════════════════════════ HISTORY TABLE ══════════════════════════════════
+function renderHistory() {
+  const wrap = document.getElementById('history-table');
+  if (!wrap) return;
+  wrap.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="border-bottom:1px solid rgba(201,168,76,0.2);">
+          <th style="text-align:left;padding:12px 8px;font-size:10px;letter-spacing:2px;color:var(--text-dim);font-weight:400;">${state.lang === 'es' ? 'PERÍODO' : 'PERIOD'}</th>
+          <th style="text-align:center;padding:12px 8px;font-size:10px;letter-spacing:2px;color:var(--text-dim);font-weight:400;">${state.lang === 'es' ? 'FUNDAMENTOS' : 'FUNDAMENTALS'}</th>
+          <th style="text-align:center;padding:12px 8px;font-size:10px;letter-spacing:2px;color:var(--text-dim);font-weight:400;">JOURNEY</th>
+          <th style="text-align:center;padding:12px 8px;font-size:10px;letter-spacing:2px;color:var(--text-dim);font-weight:400;">${state.lang === 'es' ? 'EXPERIENCIA' : 'EXPERIENCE'}</th>
+          <th style="text-align:center;padding:12px 8px;font-size:10px;letter-spacing:2px;color:var(--gold);font-weight:400;">TOTAL</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${historyData.map((d, i) => `
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);${i === historyData.length-1 ? 'background:rgba(201,168,76,0.04)' : ''}">
+            <td style="padding:14px 8px;font-size:13px;color:var(--silver-light);">${d.date}${i === historyData.length-1 ? ' <span style="font-size:9px;letter-spacing:1px;color:var(--gold);padding:2px 6px;border:1px solid rgba(201,168,76,0.3);">' + (state.lang === 'es' ? 'ACTUAL' : 'CURRENT') + '</span>' : ''}</td>
+            <td style="text-align:center;padding:14px 8px;font-size:16px;font-family:'Cormorant Garamond',serif;color:var(--silver-light);">${d.fund}</td>
+            <td style="text-align:center;padding:14px 8px;font-size:16px;font-family:'Cormorant Garamond',serif;color:var(--silver-light);">${d.journey}</td>
+            <td style="text-align:center;padding:14px 8px;font-size:16px;font-family:'Cormorant Garamond',serif;color:var(--silver-light);">${d.exp}</td>
+            <td style="text-align:center;padding:14px 8px;font-size:20px;font-family:'Cormorant Garamond',serif;color:var(--gold);font-weight:600;">${d.total}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+// ══════════════════════════════════ QUESTION EDITOR ══════════════════════════════════
+function renderQEditor() {
+  const tabsWrap = document.getElementById('q-module-tabs');
+  const listWrap = document.getElementById('q-list');
+  if (!tabsWrap || !listWrap) return;
+
+  const modules_es = ['01 — Fundamentos', '02 — Journey', '03 — Experiencia'];
+  const modules_en = ['01 — Fundamentals', '02 — Journey', '03 — Experience'];
+  tabsWrap.innerHTML = modules_es.map((m, i) => `
+    <button class="q-mod-tab${state.activeQModule === i ? ' active' : ''}" onclick="state.activeQModule=${i};renderQEditor()">
+      ${state.lang === 'es' ? modules_es[i] : modules_en[i]}
+    </button>`).join('');
+
+  const filtered = state.questions.filter(q => q.module === state.activeQModule);
+  const typeLabel = { options: state.lang === 'es' ? 'OPCIÓN MÚLTIPLE' : 'MULTIPLE CHOICE', scale: 'ESCALA 1–5', yesno: state.lang === 'es' ? 'SÍ / NO' : 'YES / NO' };
+
+  listWrap.innerHTML = filtered.map(q => `
+    <div class="q-item">
+      <div class="q-drag">⠿</div>
+      <div class="q-content">
+        <div class="q-text">${state.lang === 'es' ? q.text_es : q.text_en}</div>
+        <div class="q-meta">
+          <span class="q-type-badge">${typeLabel[q.type] || q.type}</span>
+        </div>
+      </div>
+      <div class="q-actions">
+        <button class="q-btn" onclick="editQuestion(${q.id})" title="${state.lang === 'es' ? 'Editar' : 'Edit'}">✏️</button>
+        <button class="q-btn del" onclick="deleteQuestion(${q.id})" title="${state.lang === 'es' ? 'Eliminar' : 'Delete'}">🗑</button>
+      </div>
+    </div>`).join('') || `<div style="color:var(--text-dim);font-size:13px;padding:24px;text-align:center;">${state.lang === 'es' ? 'No hay preguntas en este módulo.' : 'No questions in this module.'}</div>`;
+}
+
+function openAddQuestion() { document.getElementById('modal-add-q').classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function saveNewQuestion() {
+  const text = document.getElementById('new-q-text').value.trim();
+  if (!text) { showToast(state.lang === 'es' ? 'Escribe el texto de la pregunta.' : 'Enter the question text.'); return; }
+  const newQ = {
+    id: Date.now(),
+    module: parseInt(document.getElementById('new-q-module').value),
+    text_es: text, text_en: text,
+    type: document.getElementById('new-q-type').value
+  };
+  state.questions.push(newQ);
+  closeModal('modal-add-q');
+  document.getElementById('new-q-text').value = '';
+  state.activeQModule = newQ.module;
+  renderQEditor();
+  showToast(state.lang === 'es' ? 'Pregunta añadida.' : 'Question added.');
+}
+
+function deleteQuestion(id) {
+  if (!confirm(state.lang === 'es' ? '¿Eliminar esta pregunta?' : 'Delete this question?')) return;
+  state.questions = state.questions.filter(q => q.id !== id);
+  renderQEditor();
+  showToast(state.lang === 'es' ? 'Pregunta eliminada.' : 'Question deleted.');
+}
+
+function editQuestion(id) {
+  const q = state.questions.find(x => x.id === id);
+  if (!q) return;
+  const newText = prompt(state.lang === 'es' ? 'Editar pregunta:' : 'Edit question:', state.lang === 'es' ? q.text_es : q.text_en);
+  if (newText && newText.trim()) {
+    if (state.lang === 'es') q.text_es = newText.trim();
+    else q.text_en = newText.trim();
+    renderQEditor();
+    showToast(state.lang === 'es' ? 'Pregunta actualizada.' : 'Question updated.');
+  }
+}
+
+// ══════════════════════════════════ CLIENTS ══════════════════════════════════
+function renderClients() {
+  const wrap = document.getElementById('clients-list');
+  if (!wrap) return;
+  const avgScore = Math.round(clientResponses.reduce((a, c) => a + c.score, 0) / clientResponses.length);
+  wrap.innerHTML = `
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;">
+      <div class="kpi-card" style="flex:1;min-width:150px;">
+        <div class="kpi-label">${state.lang === 'es' ? 'TOTAL RESPUESTAS' : 'TOTAL RESPONSES'}</div>
+        <div class="kpi-value gold">${clientResponses.length}</div>
+      </div>
+      <div class="kpi-card" style="flex:1;min-width:150px;">
+        <div class="kpi-label">${state.lang === 'es' ? 'SCORE PROMEDIO' : 'AVERAGE SCORE'}</div>
+        <div class="kpi-value silver">${avgScore}</div>
+      </div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr style="border-bottom:1px solid rgba(201,168,76,0.2);">
+        <th style="text-align:left;padding:10px 8px;font-size:10px;letter-spacing:2px;color:var(--text-dim);font-weight:400;">ID</th>
+        <th style="text-align:left;padding:10px 8px;font-size:10px;letter-spacing:2px;color:var(--text-dim);font-weight:400;">${state.lang === 'es' ? 'FECHA' : 'DATE'}</th>
+        <th style="text-align:center;padding:10px 8px;font-size:10px;letter-spacing:2px;color:var(--text-dim);font-weight:400;">SCORE</th>
+        <th style="text-align:left;padding:10px 8px;font-size:10px;letter-spacing:2px;color:var(--text-dim);font-weight:400;">${state.lang === 'es' ? 'COMENTARIO' : 'COMMENT'}</th>
+      </tr></thead>
+      <tbody>
+        ${clientResponses.map(r => `
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:12px 8px;font-size:12px;color:var(--text-dim);">${r.id}</td>
+            <td style="padding:12px 8px;font-size:12px;color:var(--silver);">${r.date}</td>
+            <td style="text-align:center;padding:12px 8px;">
+              <span style="font-family:'Cormorant Garamond',serif;font-size:20px;color:${r.score >= 75 ? 'var(--success)' : r.score >= 60 ? 'var(--warning)' : 'var(--danger)'};">${r.score}</span>
+            </td>
+            <td style="padding:12px 8px;font-size:12px;color:var(--silver-light);">${state.lang === 'es' ? r.highlight_es : r.highlight_en}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function copyClientLink() {
+  showToast(state.lang === 'es' ? '📋 Enlace copiado: lumini.app/cliente?empresa=lumini' : '📋 Link copied: lumini.app/client?company=lumini');
+}
+
+// ══════════════════════════════════ QUIZ ══════════════════════════════════
+function startQuiz(moduleIdx) {
+  state.quiz.moduleIndex = moduleIdx;
+  state.quiz.questionIndex = 0;
+  state.quiz.answers = [];
+  state.quiz.mode = 'company';
+  // If sector not set, prompt sector selection first
+  if (!state.user || !state.user.sector) {
+    showSectorModal(moduleIdx);
+    return;
+  }
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function showSectorModal(moduleIdx) {
+  const opts = Object.entries(SECTOR_LABELS).map(([k,v]) =>
+    `<button class="quiz-option" style="margin-bottom:8px;" onclick="setSectorAndStart('${k}', ${moduleIdx})">
+      <span class="option-letter" style="width:auto;padding:0 6px;font-size:13px;">${v[state.lang]}</span>
+    </button>`).join('');
+  const box = document.createElement('div');
+  box.id = 'sector-modal';
+  box.style.cssText = 'position:fixed;inset:0;background:rgba(13,27,46,0.92);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px;';
+  box.innerHTML = `<div style="background:var(--navy-mid);border:1px solid rgba(201,168,76,0.3);padding:40px;max-width:480px;width:100%;">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--gold);margin-bottom:8px;">${state.lang==='es'?'¿Cuál es tu sector?':'What is your sector?'}</div>
+    <div style="font-size:11px;color:var(--text-dim);letter-spacing:1px;margin-bottom:28px;">${state.lang==='es'?'Esto permite personalizar las preguntas a tu industria.':'This allows us to tailor questions to your industry.'}</div>
+    <div class="quiz-options">${opts}</div>
+    <button class="btn-ghost" style="margin-top:20px;font-size:10px;" onclick="document.getElementById('sector-modal').remove()">← ${state.lang==='es'?'CANCELAR':'CANCEL'}</button>
+  </div>`;
+  document.body.appendChild(box);
+}
+
+function setSectorAndStart(sector, moduleIdx) {
+  state.user.sector = sector;
+  const sectorEl = document.getElementById('dash-sector-badge');
+  if (sectorEl) sectorEl.textContent = SECTOR_LABELS[sector] ? SECTOR_LABELS[sector][state.lang] : sector;
+  // Save sector to Firebase if connected
+  if (window._fb && state.user && state.user.uid && state.user.uid !== 'demo') {
+    const { db, ref, set } = window._fb;
+    set(ref(db, 'users/' + state.user.uid + '/sector'), sector).catch(()=>{});
+  }
+  const modal = document.getElementById('sector-modal');
+  if (modal) modal.remove();
+  state.quiz.moduleIndex = moduleIdx;
+  state.quiz.questionIndex = 0;
+  state.quiz.answers = [];
+  state.quiz.mode = 'company';
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function saveResultToFirebase(score, moduleIdx) {
+  if (!window._fb || !state.user || state.user.uid === 'demo') return;
+  const { db, ref, push } = window._fb;
+  const result = {
+    score,
+    moduleIdx,
+    sector: state.user.sector || 'otro',
+    timestamp: Date.now(),
+    date: new Date().toISOString().slice(0,7)
+  };
+  push(ref(db, 'results/' + state.user.uid), result).catch(()=>{});
+}
+
+
+  if (state.quiz.mode === 'client') {
+    return state.questions.filter(q => q.module === 0).slice(0, 5);
+  }
+  return state.questions.filter(q => q.module === state.quiz.moduleIndex);
+}
+
+function renderQuestion() {
+  const qs = getQuizQuestions();
+  const qi = state.quiz.questionIndex;
+  const q = qs[qi];
+  if (!q) { finishQuiz(); return; }
+
+  const moduleNames_es = ['Fundamentos del Servicio', 'Viaje del Cliente', 'Nivel de Experiencia', 'Evaluación Cliente'];
+  const moduleNames_en = ['Service Fundamentals', 'Customer Journey', 'Experience Level', 'Client Evaluation'];
+  const mIdx = state.quiz.mode === 'client' ? 3 : state.quiz.moduleIndex;
+
+  document.getElementById('quiz-module-title').textContent = state.lang === 'es' ? moduleNames_es[mIdx] : moduleNames_en[mIdx];
+  document.getElementById('q-module-label').textContent = `MÓDULO 0${mIdx+1} — ${(state.lang === 'es' ? moduleNames_es[mIdx] : moduleNames_en[mIdx]).toUpperCase()}`;
+  document.getElementById('q-num').textContent = `${state.lang === 'es' ? 'Pregunta' : 'Question'} ${qi + 1} ${state.lang === 'es' ? 'de' : 'of'} ${qs.length}`;
+  document.getElementById('q-text').textContent = state.lang === 'es' ? q.text_es : q.text_en;
+  document.getElementById('quiz-progress-text').textContent = `${qi + 1} / ${qs.length}`;
+  document.getElementById('quiz-progress-fill').style.width = `${((qi + 1) / qs.length) * 100}%`;
+  document.getElementById('quiz-mode-label').textContent = state.quiz.mode === 'client' ? (state.lang === 'es' ? 'CLIENTE' : 'CUSTOMER') : (state.lang === 'es' ? 'EMPRESA' : 'BUSINESS');
+  document.getElementById('btn-prev').style.visibility = qi > 0 ? 'visible' : 'hidden';
+
+  const wrap = document.getElementById('q-options-wrap');
+  const selected = state.quiz.answers[qi];
+
+  if (q.type === 'scale') {
+    wrap.innerHTML = `
+      <div class="quiz-scale" id="scale-wrap">
+        ${[1,2,3,4,5].map(n => `<button class="scale-btn${selected === n ? ' selected' : ''}" onclick="selectAnswer(${n})">${n}</button>`).join('')}
+      </div>
+      <div class="scale-labels">
+        <span>${state.lang === 'es' ? 'Muy bajo' : 'Very low'}</span>
+        <span>${state.lang === 'es' ? 'Muy alto' : 'Very high'}</span>
+      </div>`;
+  } else if (q.type === 'yesno') {
+    const opts = state.lang === 'es' ? ['Sí', 'No', 'Parcialmente', 'No aplica'] : ['Yes', 'No', 'Partially', 'N/A'];
+    const vals = [4, 0, 2, 3];
+    wrap.innerHTML = `<div class="quiz-options">${opts.map((o, i) => `
+      <button class="quiz-option${selected === vals[i] ? ' selected' : ''}" onclick="selectAnswer(${vals[i]})">
+        <span class="option-letter">${String.fromCharCode(65+i)}</span>${o}
+      </button>`).join('')}</div>`;
+  } else {
+    const opts = state.lang === 'es' ? (q.opts_es || ['Nunca','Raramente','A veces','Siempre']) : (q.opts_en || ['Never','Rarely','Sometimes','Always']);
+    wrap.innerHTML = `<div class="quiz-options">${opts.map((o, i) => `
+      <button class="quiz-option${selected === i ? ' selected' : ''}" onclick="selectAnswer(${i})">
+        <span class="option-letter">${String.fromCharCode(65+i)}</span>${o}
+      </button>`).join('')}</div>`;
+  }
+}
+
+function selectAnswer(val) {
+  state.quiz.answers[state.quiz.questionIndex] = val;
+  renderQuestion();
+}
+
+function nextQuestion() {
+  if (state.quiz.answers[state.quiz.questionIndex] === undefined) {
+    showToast(state.lang === 'es' ? 'Por favor responde antes de continuar.' : 'Please answer before continuing.');
+    return;
+  }
+  state.quiz.questionIndex++;
+  const qs = getQuizQuestions();
+  if (state.quiz.questionIndex >= qs.length) { finishQuiz(); return; }
+  renderQuestion();
+}
+
+function prevQuestion() {
+  if (state.quiz.questionIndex > 0) { state.quiz.questionIndex--; renderQuestion(); }
+}
+
+function exitQuiz() {
+  if (state.user) { showScreen('screen-dashboard'); }
+  else { showScreen('screen-landing'); }
+}
+
+function finishQuiz() {
+  const qs = getQuizQuestions();
+  const total = state.quiz.answers.reduce((a, v) => a + (v || 0), 0);
+  const maxPossible = qs.length * 4;
+  const score = Math.round((total / maxPossible) * 100);
+
+  let level_es, level_en, desc_es, desc_en;
+  if (score >= 85) { level_es = 'Servicio Sobresaliente'; level_en = 'Outstanding Service'; desc_es = 'Tu organización ha alcanzado un nivel excepcional de excelencia en servicio. El foco ahora es mantener y liderar el sector.'; desc_en = 'Your organization has reached an exceptional level of service excellence. The focus now is maintaining and leading the industry.'; }
+  else if (score >= 70) { level_es = 'Servicio en Desarrollo'; level_en = 'Developing Service'; desc_es = 'Bases sólidas con oportunidades concretas de mejora en personalización y seguimiento post-servicio.'; desc_en = 'Solid foundations with concrete improvement opportunities in personalization and post-service follow-up.'; }
+  else if (score >= 50) { level_es = 'Servicio Básico'; level_en = 'Basic Service'; desc_es = 'El servicio cumple expectativas mínimas. Existen brechas significativas que impactan la fidelización del cliente.'; desc_en = 'Service meets minimum expectations. Significant gaps exist that impact customer loyalty.'; }
+  else { level_es = 'Servicio Deficiente'; level_en = 'Deficient Service'; desc_es = 'Se requieren acciones urgentes para establecer los fundamentos del servicio de calidad.'; desc_en = 'Urgent action is required to establish the foundations of quality service.'; }
+
+  document.getElementById('result-score').textContent = score;
+  document.getElementById('result-level').textContent = state.lang === 'es' ? level_es : level_en;
+  document.getElementById('result-desc').textContent = state.lang === 'es' ? desc_es : desc_en;
+
+  const circumference = 502;
+  const offset = circumference - (score / 100) * circumference;
+  document.getElementById('score-circle').setAttribute('stroke-dashoffset', offset);
+
+  const scoreVal = score;
+  document.getElementById('res-fund').textContent = Math.min(100, scoreVal + Math.round(Math.random()*10-3));
+  document.getElementById('res-journey').textContent = Math.min(100, scoreVal + Math.round(Math.random()*10-5));
+  document.getElementById('res-exp').textContent = Math.min(100, scoreVal + Math.round(Math.random()*10-4));
+
+  const recs = [
+    { priority: 'high', area_es: 'PROCESO — QUEJAS', area_en: 'PROCESS — COMPLAINTS', text_es: 'Implementar un protocolo formal de gestión de quejas con tiempo de respuesta máximo de 24 horas.', text_en: 'Implement a formal complaint management protocol with a maximum response time of 24 hours.' },
+    { priority: 'high', area_es: 'EQUIPO — CAPACITACIÓN', area_en: 'TEAM — TRAINING', text_es: 'Diseñar un programa de capacitación semestral en hospitalidad y experiencia de cliente para todo el equipo de contacto.', text_en: 'Design a semi-annual hospitality and customer experience training program for all contact staff.' },
+    { priority: 'med', area_es: 'JOURNEY — POST-SERVICIO', area_en: 'JOURNEY — POST-SERVICE', text_es: 'Crear un flujo de seguimiento post-visita con encuesta breve y email de agradecimiento personalizado dentro de las 48 horas.', text_en: 'Create a post-visit follow-up flow with a brief survey and personalized thank-you email within 48 hours.' },
+    { priority: 'med', area_es: 'EXPERIENCIA — PERSONALIZACIÓN', area_en: 'EXPERIENCE — PERSONALIZATION', text_es: 'Implementar un sistema básico de registro de preferencias de clientes recurrentes para personalizar futuras visitas.', text_en: 'Implement a basic preference tracking system for returning customers to personalize future visits.' },
+    { priority: 'low', area_es: 'DIGITAL — PRESENCIA', area_en: 'DIGITAL — PRESENCE', text_es: 'Establecer un plan de contenido mensual para redes sociales que refleje la identidad del servicio y fomente las recomendaciones.', text_en: 'Establish a monthly content plan for social media that reflects the service identity and encourages recommendations.' },
+  ];
+
+  const recWrap = document.getElementById('result-recs');
+  recWrap.innerHTML = `<div class="rec-title">${state.lang === 'es' ? 'Recomendaciones de Mejora' : 'Improvement Recommendations'}</div>` +
+    recs.map(r => `
+      <div class="rec-item">
+        <div class="rec-priority priority-${r.priority}"></div>
+        <div>
+          <div class="rec-area">${state.lang === 'es' ? r.area_es : r.area_en}</div>
+          <div class="rec-text">${state.lang === 'es' ? r.text_es : r.text_en}</div>
+        </div>
+      </div>`).join('');
+
+  showScreen('screen-results');
+  saveResultToFirebase(score, state.quiz.moduleIndex);
+}
+
+// ══════════════════════════════════ UTILS ══════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3000);
+}
+
+function downloadReport() {
+  showToast(state.lang === 'es' ? '📄 Generando reporte PDF... (función completa en versión Pro)' : '📄 Generating PDF report... (full feature in Pro version)');
+}
+
+// ══════════════════════════════════ INIT ══════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('dash-date') && (document.getElementById('dash-date').textContent = new Date().toLocaleDateString('es-CL', { weekday:'long', year:'numeric', month:'long', day:'numeric' }).toUpperCase());
+});
+</script>
+</body>
+</html>
