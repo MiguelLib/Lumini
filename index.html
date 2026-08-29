@@ -283,7 +283,6 @@ html,body{height:100%;font-family:'Josefin Sans',sans-serif;background:var(--nav
 <div id="screen-landing" class="screen active">
   <div class="landing-logo">LUMINI</div>
   <div class="landing-tagline">DIAGNÓSTICO DE SERVICIO AL CLIENTE</div>
-  <div class="landing-claim"> <em>TU SONRISA siempre generará BENEFICIOS</em></div>
   <div class="landing-claim">Descubre el <em>nivel real</em> de tu servicio.<br>Actúa con datos. Crece con intención.</div>
   <div class="landing-btns">
     <button class="btn-primary" onclick="openAuth('register')">COMENZAR GRATIS</button>
@@ -854,9 +853,15 @@ function renderQ(){
   const hasAns=cur!==null&&cur!==undefined&&(Array.isArray(cur)?cur.length>0:true);
   const isLast=idx===ALL_Q.length-1;
 
+  const serviceLabel = (APP.user&&APP.user.service) ? APP.user.service : (APP.user&&SECTORS[APP.user.sector] ? SECTORS[APP.user.sector] : '');
+
   document.getElementById('quiz-body').innerHTML=`
     ${bridgeHtml}
     <div class="quiz-wrap">
+      ${serviceLabel ? `<div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:20px;padding:8px 16px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);border-left:3px solid var(--gold)">
+        <span style="font-size:10px;letter-spacing:2px;color:var(--dim)">EVALUANDO</span>
+        <span style="font-size:13px;color:var(--gold);letter-spacing:1px;font-weight:600">${serviceLabel.toUpperCase()}</span>
+      </div>` : ''}
       <div class="quiz-header">
         <button class="quiz-back-btn" onclick="${idx>0?'prevQ()':'backToIntro()'}">
           ← ${idx>0?'PREGUNTA ANTERIOR':'VOLVER AL INICIO'}
